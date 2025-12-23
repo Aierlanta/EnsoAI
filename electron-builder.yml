@@ -11,7 +11,32 @@ files:
   - "node_modules/**/*"
   - "!node_modules/**/README.md"
   - "!node_modules/**/CHANGELOG.md"
+  - "!node_modules/**/LICENSE*"
+  - "!node_modules/**/*.md"
   - "!node_modules/**/*.ts"
+  - "!node_modules/**/*.map"
+  - "!node_modules/**/test/**"
+  - "!node_modules/**/tests/**"
+  - "!node_modules/**/__tests__/**"
+  - "!node_modules/**/docs/**"
+  - "!node_modules/**/example/**"
+  - "!node_modules/**/examples/**"
+  # Exclude build tools that shouldn't be in production
+  - "!node_modules/lightningcss-*/**"
+  - "!node_modules/@tailwindcss/**"
+  - "!node_modules/tailwindcss/**"
+  - "!node_modules/jiti/**"
+  - "!node_modules/@parcel/**"
+  - "!node_modules/@babel/**"
+  # Exclude native module build artifacts (source not needed at runtime)
+  - "!node_modules/better-sqlite3/deps/**"
+  - "!node_modules/better-sqlite3/src/**"
+  - "!node_modules/node-pty/src/**"
+  - "!node_modules/node-pty/deps/**"
+  # Exclude lucide-react source maps and types
+  - "!node_modules/lucide-react/dist/*.mjs.map"
+  - "!node_modules/lucide-react/dist/*.d.ts"
+  - "!node_modules/lucide-react/dist/*.d.mts"
 
 asar: true
 compression: maximum
