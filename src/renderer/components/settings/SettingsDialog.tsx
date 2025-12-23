@@ -46,6 +46,20 @@ export function SettingsDialog({ trigger, open, onOpenChange }: SettingsDialogPr
   // Controlled mode (open prop provided) doesn't need trigger
   const isControlled = open !== undefined;
 
+  // Cmd+W to close settings when open
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
+        e.preventDefault();
+        onOpenChange?.(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onOpenChange]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {!isControlled && (
