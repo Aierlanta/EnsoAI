@@ -19,6 +19,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { CreateWorktreeDialog } from '@/components/worktree/CreateWorktreeDialog';
 import { cn } from '@/lib/utils';
 
@@ -149,9 +156,33 @@ export function WorktreePanel({
             ))}
           </div>
         ) : filteredWorktrees.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">
-            {searchQuery ? '没有找到匹配的 Worktree' : '项目的 worktree'}
-          </div>
+          <Empty className="border-0">
+            <EmptyMedia variant="icon">
+              <GitBranch className="h-4.5 w-4.5" />
+            </EmptyMedia>
+            <EmptyHeader>
+              <EmptyTitle className="text-base">
+                {searchQuery ? '未找到匹配' : '暂无 Worktree'}
+              </EmptyTitle>
+              <EmptyDescription>
+                {searchQuery ? '尝试使用不同的关键词搜索' : '创建第一个 Worktree 开始工作'}
+              </EmptyDescription>
+            </EmptyHeader>
+            {!searchQuery && (
+              <CreateWorktreeDialog
+                branches={branches}
+                projectName={projectName}
+                isLoading={isCreating}
+                onSubmit={onCreateWorktree}
+                trigger={
+                  <Button variant="outline" className="mt-2">
+                    <Plus className="mr-2 h-4 w-4" />
+                    创建 Worktree
+                  </Button>
+                }
+              />
+            )}
+          </Empty>
         ) : (
           <div className="space-y-1">
             {filteredWorktrees.map((worktree) => (
