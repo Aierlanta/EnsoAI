@@ -83,10 +83,12 @@ export function AgentTerminal({
     [initialized, onInitialized]
   );
 
-  // Handle Shift+Enter for newline
+  // Handle Shift+Enter for newline (Ctrl+J / LF for all agents)
   const handleCustomKey = useCallback((event: KeyboardEvent, ptyId: string) => {
-    if (event.type === 'keydown' && event.key === 'Enter' && event.shiftKey) {
-      window.electronAPI.terminal.write(ptyId, '\x1b\r');
+    if (event.key === 'Enter' && event.shiftKey) {
+      if (event.type === 'keydown') {
+        window.electronAPI.terminal.write(ptyId, '\x0a');
+      }
       return false;
     }
     return true;
