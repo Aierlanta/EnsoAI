@@ -2,6 +2,7 @@ import { defaultDarkTheme, getXtermTheme } from '@/lib/ghosttyTheme';
 import { useSettingsStore } from '@/stores/settings';
 import { FitAddon } from '@xterm/addon-fit';
 import { LigaturesAddon } from '@xterm/addon-ligatures';
+import { SearchAddon } from '@xterm/addon-search';
 import { Unicode11Addon } from '@xterm/addon-unicode11';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { WebglAddon } from '@xterm/addon-webgl';
@@ -36,6 +37,12 @@ export interface UseXtermResult {
   fit: () => void;
   /** Get current terminal instance */
   terminal: Terminal | null;
+  /** Search for text in terminal */
+  findNext: (term: string, options?: { caseSensitive?: boolean; wholeWord?: boolean; regex?: boolean }) => boolean;
+  /** Search backwards for text */
+  findPrevious: (term: string, options?: { caseSensitive?: boolean; wholeWord?: boolean; regex?: boolean }) => boolean;
+  /** Clear search decorations */
+  clearSearch: () => void;
 }
 
 function useTerminalSettings() {
@@ -72,6 +79,7 @@ export function useXterm({
   const terminalRef = useRef<Terminal | null>(null);
   const settings = useTerminalSettings();
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const searchAddonRef = useRef<SearchAddon | null>(null);
   const ptyIdRef = useRef<string | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   const exitCleanupRef = useRef<(() => void) | null>(null);
@@ -104,6 +112,24 @@ export function useXterm({
     }
   }, []);
 
+  const findNext = useCallback(
+    (term: string, options?: { caseSensitive?: boolean; wholeWord?: boolean; regex?: boolean }) => {
+      return searchAddonRef.current?.findNext(term, options) ?? false;
+    },
+    []
+  );
+
+  const findPrevious = useCallback(
+    (term: string, options?: { caseSensitive?: boolean; wholeWord?: boolean; regex?: boolean }) => {
+      return searchAddonRef.current?.findPrevious(term, options) ?? false;
+    },
+    []
+  );
+
+  const clearSearch = useCallback(() => {
+    searchAddonRef.current?.clearDecorations();
+  }, []);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: settings excluded - updated via separate effect
   const initTerminal = useCallback(async () => {
     if (!containerRef.current || terminalRef.current) return;
@@ -123,10 +149,14 @@ export function useXterm({
     });
 
     const fitAddon = new FitAddon();
-    const webLinksAddon = new WebLinksAddon();
+    const searchAddon = new SearchAddon();
+    const webLinksAddon = new WebLinksAddon((_event, uri) => {
+      window.electronAPI.shell.openExternal(uri);
+    });
     const unicode11Addon = new Unicode11Addon();
 
     terminal.loadAddon(fitAddon);
+    terminal.loadAddon(searchAddon);
     terminal.loadAddon(webLinksAddon);
     terminal.loadAddon(unicode11Addon);
     terminal.unicode.activeVersion = '11';
@@ -140,6 +170,7 @@ export function useXterm({
 
     terminalRef.current = terminal;
     fitAddonRef.current = fitAddon;
+    searchAddonRef.current = searchAddon;
 
     // Custom key handler
     terminal.attachCustomKeyEventHandler((event) => {
@@ -315,5 +346,8 @@ export function useXterm({
     write,
     fit,
     terminal: terminalRef.current,
+    findNext,
+    findPrevious,
+    clearSearch,
   };
 }

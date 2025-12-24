@@ -1,4 +1,5 @@
 import { IPC_CHANNELS } from '@shared/types';
+import { shell } from 'electron';
 import type {
   AgentCliInfo,
   AgentCliStatus,
@@ -190,6 +191,11 @@ const electronAPI = {
   // Environment
   env: {
     HOME: process.env.HOME || process.env.USERPROFILE || '',
+  },
+
+  // Shell
+  shell: {
+    openExternal: (url: string): Promise<void> => shell.openExternal(url),
   },
 
   // Menu actions from main process

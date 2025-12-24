@@ -1,5 +1,9 @@
+import {
+  TerminalSearchBar,
+  type TerminalSearchBarRef,
+} from '@/components/terminal/TerminalSearchBar';
 import { useXterm } from '@/hooks/useXterm';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface AgentTerminalProps {
   cwd?: string;
@@ -88,7 +92,7 @@ export function AgentTerminal({
     return true;
   }, []);
 
-  const { containerRef, isLoading, settings } = useXterm({
+  const { containerRef, isLoading, settings, findNext, findPrevious, clearSearch } = useXterm({
     cwd,
     command,
     isActive,
@@ -96,10 +100,42 @@ export function AgentTerminal({
     onData: handleData,
     onCustomKey: handleCustomKey,
   });
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchBarRef = useRef<TerminalSearchBarRef>(null);
+
+  // Handle Cmd+F / Ctrl+F
+  const handleSearchKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        if (isSearchOpen) {
+          searchBarRef.current?.focus();
+        } else {
+          setIsSearchOpen(true);
+        }
+      }
+    },
+    [isSearchOpen]
+  );
+
+  useEffect(() => {
+    if (!isActive) return;
+    window.addEventListener('keydown', handleSearchKeyDown);
+    return () => window.removeEventListener('keydown', handleSearchKeyDown);
+  }, [isActive, handleSearchKeyDown]);
 
   return (
     <div className="relative h-full w-full" style={{ backgroundColor: settings.theme.background }}>
       <div ref={containerRef} className="h-full w-full px-[5px] py-[2px]" />
+      <TerminalSearchBar
+        ref={searchBarRef}
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onFindNext={findNext}
+        onFindPrevious={findPrevious}
+        onClearSearch={clearSearch}
+        theme={settings.theme}
+      />
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
