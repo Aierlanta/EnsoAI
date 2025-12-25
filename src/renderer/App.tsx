@@ -66,6 +66,22 @@ const getStoredTabMap = (): Record<string, TabId> => {
   return {};
 };
 
+// Normalize path for comparison (handles Windows case-insensitivity and trailing slashes)
+const normalizePath = (path: string): string => {
+  // Remove trailing slashes/backslashes
+  let normalized = path.replace(/[\\/]+$/, '');
+  // On Windows, normalize to lowercase for case-insensitive comparison
+  if (navigator.platform.startsWith('Win')) {
+    normalized = normalized.toLowerCase();
+  }
+  return normalized;
+};
+
+// Check if two paths are equal (considering OS-specific rules)
+const pathsEqual = (path1: string, path2: string): boolean => {
+  return normalizePath(path1) === normalizePath(path2);
+};
+
 export default function App() {
   // Per-worktree tab state: { [worktreePath]: TabId }
   const [worktreeTabMap, setWorktreeTabMap] = useState<Record<string, TabId>>(getStoredTabMap);
@@ -330,18 +346,21 @@ export default function App() {
 
   // Listen for open path event from CLI (enso command)
   useEffect(() => {
-    const cleanup = window.electronAPI.app.onOpenPath((path) => {
-      console.log('[App] Received onOpenPath:', path);
-      // Check if repo already exists
-      const existingRepo = repositories.find((r) => r.path === path);
+    const cleanup = window.electronAPI.app.onOpenPath((rawPath) => {
+      console.log('[App] Received onOpenPath:', rawPath);
+      // Normalize the path (remove trailing slashes)
+      const path = rawPath.replace(/[\\/]+$/, '');
+      // Check if repo already exists (using path comparison that handles Windows case-insensitivity)
+      const existingRepo = repositories.find((r) => pathsEqual(r.path, path));
       if (existingRepo) {
-        // Just select it
-        console.log('[App] Repo exists, selecting:', path);
-        setSelectedRepo(path);
+        // Just select it (use the existing path to maintain consistency)
+        console.log('[App] Repo exists, selecting:', existingRepo.path);
+        setSelectedRepo(existingRepo.path);
       } else {
         // Add new repo
         console.log('[App] Adding new repo:', path);
-        const name = path.split('/').pop() || path;
+        // Handle both forward and back slashes for name extraction
+        const name = path.split(/[\\/]/).pop() || path;
         const newRepo: Repository = { name, path };
         const updated = [...repositories, newRepo];
         saveRepositories(updated);
