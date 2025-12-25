@@ -143,8 +143,8 @@ if %ERRORLEVEL%==0 (
   for /f "usebackq delims=" %%i in (\`powershell -NoProfile -Command "[uri]::EscapeDataString('%TARGET_PATH%')"\`) do set "ENCODED_PATH=%%i"
   start "" "enso://open?path=!ENCODED_PATH!"
 ) else (
-  :: App not running, launch with path
-  start "" "${exePath}" "--open-path=!TARGET_PATH!"
+  :: App not running, launch with path (use caret to escape special chars, no extra quotes)
+  "${exePath}" --open-path=!TARGET_PATH!
 )
 `;
   }

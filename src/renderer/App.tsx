@@ -348,8 +348,8 @@ export default function App() {
   useEffect(() => {
     const cleanup = window.electronAPI.app.onOpenPath((rawPath) => {
       console.log('[App] Received onOpenPath:', rawPath);
-      // Normalize the path (remove trailing slashes)
-      const path = rawPath.replace(/[\\/]+$/, '');
+      // Normalize the path: remove trailing slashes and any stray quotes (Windows CMD issue)
+      const path = rawPath.replace(/[\\/]+$/, '').replace(/^["']|["']$/g, '');
       // Check if repo already exists (using path comparison that handles Windows case-insensitivity)
       const existingRepo = repositories.find((r) => pathsEqual(r.path, path));
       if (existingRepo) {

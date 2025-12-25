@@ -97,21 +97,28 @@ function sendOpenPath(path: string): void {
   }
 }
 
+// Sanitize path: remove trailing slashes/backslashes and stray quotes (Windows CMD issue)
+function sanitizePath(path: string): string {
+  return path.replace(/[\\/]+$/, '').replace(/^["']|["']$/g, '');
+}
+
 // Handle command line arguments
 function handleCommandLineArgs(argv: string[]): void {
   console.log('[Main] Handling command line args:', argv);
   for (const arg of argv) {
     if (arg.startsWith('--open-path=')) {
-      const path = arg.slice('--open-path='.length);
-      console.log('[Main] Found --open-path:', path);
+      const rawPath = arg.slice('--open-path='.length);
+      const path = sanitizePath(rawPath);
+      console.log('[Main] Found --open-path:', rawPath, '-> sanitized:', path);
       if (path) {
         sendOpenPath(path);
       }
       return;
     }
     if (arg.startsWith('enso://')) {
-      const path = parseEnsoUrl(arg);
-      console.log('[Main] Found enso:// URL, parsed path:', path);
+      const rawPath = parseEnsoUrl(arg);
+      const path = rawPath ? sanitizePath(rawPath) : null;
+      console.log('[Main] Found enso:// URL, parsed path:', rawPath, '-> sanitized:', path);
       if (path) {
         sendOpenPath(path);
       }
