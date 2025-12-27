@@ -7,7 +7,7 @@ import {
   PanelLeft,
   PanelLeftClose,
 } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertDialog,
   AlertDialogClose,
@@ -65,7 +65,20 @@ export function SourceControlPanel({
   const [selectedCommitHash, setSelectedCommitHash] = useState<string | null>(null);
   const [selectedCommitFile, setSelectedCommitFile] = useState<string | null>(null);
 
-  const { data: changes, isLoading } = useFileChanges(rootPath ?? null, isActive);
+  const {
+    data: changes,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useFileChanges(rootPath ?? null, isActive);
+
+  // Refetch immediately when tab becomes active
+  useEffect(() => {
+    if (isActive && rootPath) {
+      refetch();
+    }
+  }, [isActive, rootPath, refetch]);
+
   const {
     data: commitsData,
     isLoading: commitsLoading,
@@ -290,6 +303,8 @@ export function SourceControlPanel({
                         onUnstage={handleUnstage}
                         onDiscard={handleDiscard}
                         onDeleteUntracked={handleDeleteUntracked}
+                        onRefresh={() => refetch()}
+                        isRefreshing={isFetching}
                         repoPath={rootPath}
                       />
                     </div>

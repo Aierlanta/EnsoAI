@@ -8,6 +8,7 @@ import {
   List,
   Minus,
   Plus,
+  RefreshCw,
   RotateCcw,
   TreeDeciduous,
 } from 'lucide-react';
@@ -30,6 +31,8 @@ interface ChangesListProps {
   onUnstage: (paths: string[]) => void;
   onDiscard: (path: string) => void;
   onDeleteUntracked?: (path: string) => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   repoPath?: string;
 }
 
@@ -136,6 +139,8 @@ export function ChangesList({
   onUnstage,
   onDiscard,
   onDeleteUntracked,
+  onRefresh,
+  isRefreshing,
   repoPath,
 }: ChangesListProps) {
   const { t } = useI18n();
@@ -188,6 +193,17 @@ export function ChangesList({
             <List />
             {t('List view')}
           </Button>
+          {onRefresh && (
+            <Button
+              variant="outline"
+              size="icon-xs"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              title={t('Refresh')}
+            >
+              <RefreshCw className={cn(isRefreshing && 'animate-spin')} />
+            </Button>
+          )}
         </div>
         {/* Tree View */}
         <div className="flex-1 overflow-hidden">
@@ -249,6 +265,17 @@ export function ChangesList({
             </>
           )}
         </Button>
+        {onRefresh && (
+          <Button
+            variant="outline"
+            size="icon-xs"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            title={t('Refresh')}
+          >
+            <RefreshCw className={cn(isRefreshing && 'animate-spin')} />
+          </Button>
+        )}
       </div>
 
       {/* Empty State */}

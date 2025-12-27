@@ -247,6 +247,13 @@ ${truncatedDiff}`;
           env: { ...process.env, PATH: getEnhancedPath() },
         });
 
+        // Handle stdin errors to prevent EPIPE crashes
+        proc.stdin.on('error', (err) => {
+          if ((err as NodeJS.ErrnoException).code !== 'EPIPE') {
+            console.error('[GenerateCommitMsg] stdin error:', err.message);
+          }
+        });
+
         proc.stdin.write(prompt);
         proc.stdin.end();
 
@@ -364,7 +371,7 @@ ${gitLog || '(No commit history available)'}`;
         'stream-json',
         '--no-session-persistence',
         '--disallowedTools',
-        'Bash(git:*) Edit',
+        '"Bash(git:*)" Edit',
         '--model',
         model,
         '--verbose',
@@ -382,6 +389,14 @@ ${gitLog || '(No commit history available)'}`;
       activeCodeReviews.set(reviewId, proc);
 
       const sender = event.sender;
+
+      // Handle stdin errors to prevent EPIPE crashes
+      proc.stdin.on('error', (err) => {
+        // Ignore EPIPE - process may have exited before we finished writing
+        if ((err as NodeJS.ErrnoException).code !== 'EPIPE') {
+          console.error('[CodeReview] stdin error:', err.message);
+        }
+      });
 
       proc.stdin.write(prompt);
       proc.stdin.end();
