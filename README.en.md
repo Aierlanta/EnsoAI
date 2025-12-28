@@ -28,6 +28,60 @@ EnsoAI is a desktop application that combines **Git Worktree management** with *
 
 ![EnsoAI Screenshot](docs/assets/screenshot-main.png)
 
+### Installation
+
+#### Package Managers (Recommended)
+
+**macOS (Homebrew)**
+
+```bash
+brew tap j3n5en/ensoai
+brew install --cask ensoai
+```
+
+**Windows (Scoop)**
+
+```powershell
+scoop bucket add ensoai https://github.com/J3n5en/scoop-ensoai
+scoop install ensoai
+```
+
+#### Manual Download
+
+Download the installer for your platform from [GitHub Releases](https://github.com/J3n5en/EnsoAI/releases/latest):
+
+| Platform | File |
+|----------|------|
+| macOS (Apple Silicon) | `EnsoAI-x.x.x-arm64.dmg` |
+| macOS (Intel) | `EnsoAI-x.x.x.dmg` |
+| Windows (Installer) | `EnsoAI-Setup-x.x.x.exe` |
+| Windows (Portable) | `EnsoAI-x.x.x-portable.exe` |
+| Linux (AppImage) | `EnsoAI-x.x.x.AppImage` |
+| Linux (deb) | `ensoai_x.x.x_amd64.deb` |
+
+> ⚠️ **macOS Users**: The app is not signed. If you see "damaged" warning, run in terminal:
+> ```bash
+> sudo xattr -dr com.apple.quarantine /Applications/EnsoAI.app
+> ```
+
+#### Build from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/J3n5en/EnsoAI.git
+cd EnsoAI
+
+# Install dependencies (requires Node.js 20+, pnpm 10+)
+pnpm install
+
+# Run in development mode
+pnpm dev
+
+# Build for production
+pnpm build:mac    # macOS
+pnpm build:win    # Windows
+pnpm build:linux  # Linux
+```
 
 ### Features
 
@@ -109,61 +163,6 @@ Quick access to all actions via `Cmd+Shift+P`:
 - **Keyboard Shortcuts** - Efficient navigation (Cmd+1-9 to switch tabs)
 - **Settings Persistence** - All settings saved to JSON for easy recovery
 
-### Installation
-
-#### Package Managers (Recommended)
-
-**macOS (Homebrew)**
-
-```bash
-brew tap j3n5en/ensoai
-brew install --cask ensoai
-```
-
-**Windows (Scoop)**
-
-```powershell
-scoop bucket add ensoai https://github.com/J3n5en/scoop-ensoai
-scoop install ensoai
-```
-
-#### Manual Download
-
-Download the installer for your platform from [GitHub Releases](https://github.com/J3n5en/EnsoAI/releases/latest):
-
-| Platform | File |
-|----------|------|
-| macOS (Apple Silicon) | `EnsoAI-x.x.x-arm64.dmg` |
-| macOS (Intel) | `EnsoAI-x.x.x.dmg` |
-| Windows (Installer) | `EnsoAI-Setup-x.x.x.exe` |
-| Windows (Portable) | `EnsoAI-x.x.x-portable.exe` |
-| Linux (AppImage) | `EnsoAI-x.x.x.AppImage` |
-| Linux (deb) | `ensoai_x.x.x_amd64.deb` |
-
-> ⚠️ **macOS Users**: The app is not signed. If you see "damaged" warning, run in terminal:
-> ```bash
-> sudo xattr -dr com.apple.quarantine /Applications/EnsoAI.app
-> ```
-
-#### Build from Source
-
-```bash
-# Clone the repository
-git clone https://github.com/J3n5en/EnsoAI.git
-cd EnsoAI
-
-# Install dependencies (requires Node.js 20+, pnpm 10+)
-pnpm install
-
-# Run in development mode
-pnpm dev
-
-# Build for production
-pnpm build:mac    # macOS
-pnpm build:win    # Windows
-pnpm build:linux  # Linux
-```
-
 ### Tech Stack
 
 - **Framework**: Electron + React 19 + TypeScript
@@ -216,6 +215,13 @@ Yes. Each worktree's Agent session is saved independently. When you switch back 
 | **AI-Assisted Code Review** | Let AI review code in a new worktree without affecting main branch development |
 | **Experimental Development** | Create a temporary worktree for AI to experiment freely, delete if unsatisfied |
 | **Comparison Debugging** | Open multiple worktrees side by side to compare different implementations |
+
+</details>
+
+<details>
+<summary><strong>Why use official CLIs instead of ACP?</strong></summary>
+
+While ACP can unify core capabilities across different Agents, it's limited to just those core features and lacks many functionalities. Switching between different Agents isn't a common scenario, and the core features of different Agent CLIs are quite similar. We believe that for experienced developers, the native CLIs are more productive.
 
 </details>
 

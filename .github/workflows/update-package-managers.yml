@@ -141,9 +141,9 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           TAG="${{ steps.version.outputs.tag }}"
 
-          echo "Downloading portable exe..."
-          curl -sLO "https://github.com/J3n5en/EnsoAI/releases/download/${TAG}/EnsoAI-${VERSION}-portable.exe"
-          HASH=$(sha256sum "EnsoAI-${VERSION}-portable.exe" | cut -d' ' -f1)
+          echo "Downloading Setup exe..."
+          curl -sLO "https://github.com/J3n5en/EnsoAI/releases/download/${TAG}/EnsoAI-Setup-${VERSION}.exe"
+          HASH=$(sha256sum "EnsoAI-Setup-${VERSION}.exe" | cut -d' ' -f1)
           echo "SHA256: $HASH"
           echo "hash=$HASH" >> $GITHUB_OUTPUT
 
@@ -167,21 +167,35 @@ jobs:
             "license": "MIT",
             "architecture": {
               "64bit": {
-                "url": "https://github.com/J3n5en/EnsoAI/releases/download/v${VERSION}/EnsoAI-${VERSION}-portable.exe",
+                "url": "https://github.com/J3n5en/EnsoAI/releases/download/v${VERSION}/EnsoAI-Setup-${VERSION}.exe#/setup.exe",
                 "hash": "${HASH}"
               }
             },
+            "installer": {
+              "script": [
+                "Start-Process \"\\\$dir\\\\setup.exe\" -ArgumentList '/S', \"/D=\\\$dir\" -Wait"
+              ]
+            },
+            "post_install": [
+              "Remove-Item \"\\\$dir\\\\setup.exe\" -Force"
+            ],
             "bin": "EnsoAI.exe",
             "shortcuts": [
               ["EnsoAI.exe", "EnsoAI"]
             ],
+            "uninstaller": {
+              "script": [
+                "Stop-Process -Name 'EnsoAI' -Force -ErrorAction SilentlyContinue",
+                "Start-Sleep -Seconds 2"
+              ]
+            },
             "checkver": {
               "github": "https://github.com/J3n5en/EnsoAI"
             },
             "autoupdate": {
               "architecture": {
                 "64bit": {
-                  "url": "https://github.com/J3n5en/EnsoAI/releases/download/v\$version/EnsoAI-\$version-portable.exe"
+                  "url": "https://github.com/J3n5en/EnsoAI/releases/download/v\\\$version/EnsoAI-Setup-\\\$version.exe#/setup.exe"
                 }
               }
             }
@@ -197,9 +211,15 @@ jobs:
           git diff --cached --quiet || git commit -m "Update EnsoAI to ${{ steps.version.outputs.tag }}"
           git push
 
+  # TODO: 启用 winget 自动更新（首次提交审核通过后取消注释）
+  # update-winget:
+  #   name: Update WinGet
+  #   runs-on: windows-latest
+  #   if: false  # 临时禁用，等待首次提交审核通过
   update-winget:
     name: Update WinGet
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    if: false  # 临时禁用，等待首次提交审核通过
     steps:
       - name: Set Version
         id: version

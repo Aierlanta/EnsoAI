@@ -27,6 +27,61 @@ EnsoAI 是一款将 **Git Worktree 管理**与 **AI 编程助手**相结合的�
 
 ![EnsoAI 截图](docs/assets/screenshot-main.png)
 
+### 安装
+
+#### 包管理器（推荐）
+
+**macOS (Homebrew)**
+
+```bash
+brew tap j3n5en/ensoai
+brew install --cask ensoai
+```
+
+**Windows (Scoop)**
+
+```powershell
+scoop bucket add ensoai https://github.com/J3n5en/scoop-ensoai
+scoop install ensoai
+```
+
+#### 手动下载
+
+从 [GitHub Releases](https://github.com/J3n5en/EnsoAI/releases/latest) 下载适合你平台的安装包：
+
+| 平台 | 文件 |
+|------|------|
+| macOS (Apple Silicon) | `EnsoAI-x.x.x-arm64.dmg` |
+| macOS (Intel) | `EnsoAI-x.x.x.dmg` |
+| Windows (安装版) | `EnsoAI-Setup-x.x.x.exe` |
+| Windows (便携版) | `EnsoAI-x.x.x-portable.exe` |
+| Linux (AppImage) | `EnsoAI-x.x.x.AppImage` |
+| Linux (deb) | `ensoai_x.x.x_amd64.deb` |
+
+> ⚠️ **macOS 用户注意**：由于应用未签名，首次打开可能提示"已损坏"，请在终端执行：
+> ```bash
+> sudo xattr -dr com.apple.quarantine /Applications/EnsoAI.app
+> ```
+
+#### 从源码构建
+
+```bash
+# 克隆仓库
+git clone https://github.com/J3n5en/EnsoAI.git
+cd EnsoAI
+
+# 安装依赖（需要 Node.js 20+、pnpm 10+）
+pnpm install
+
+# 开发模式运行
+pnpm dev
+
+# 生产构建
+pnpm build:mac    # macOS
+pnpm build:win    # Windows
+pnpm build:linux  # Linux
+```
+
 ### 功能特性
 
 #### 多 Agent 支持
@@ -107,61 +162,6 @@ EnsoAI 是一款将 **Git Worktree 管理**与 **AI 编程助手**相结合的�
 - **键盘快捷键** - 高效导航（Cmd+1-9 切换标签）
 - **设置持久化** - 所有设置保存为 JSON，便于恢复
 
-### 安装
-
-#### 包管理器（推荐）
-
-**macOS (Homebrew)**
-
-```bash
-brew tap j3n5en/ensoai
-brew install --cask ensoai
-```
-
-**Windows (Scoop)**
-
-```powershell
-scoop bucket add ensoai https://github.com/J3n5en/scoop-ensoai
-scoop install ensoai
-```
-
-#### 手动下载
-
-从 [GitHub Releases](https://github.com/J3n5en/EnsoAI/releases/latest) 下载适合你平台的安装包：
-
-| 平台 | 文件 |
-|------|------|
-| macOS (Apple Silicon) | `EnsoAI-x.x.x-arm64.dmg` |
-| macOS (Intel) | `EnsoAI-x.x.x.dmg` |
-| Windows (安装版) | `EnsoAI-Setup-x.x.x.exe` |
-| Windows (便携版) | `EnsoAI-x.x.x-portable.exe` |
-| Linux (AppImage) | `EnsoAI-x.x.x.AppImage` |
-| Linux (deb) | `ensoai_x.x.x_amd64.deb` |
-
-> ⚠️ **macOS 用户注意**：由于应用未签名，首次打开可能提示"已损坏"，请在终端执行：
-> ```bash
-> sudo xattr -dr com.apple.quarantine /Applications/EnsoAI.app
-> ```
-
-#### 从源码构建
-
-```bash
-# 克隆仓库
-git clone https://github.com/J3n5en/EnsoAI.git
-cd EnsoAI
-
-# 安装依赖（需要 Node.js 20+、pnpm 10+）
-pnpm install
-
-# 开发模式运行
-pnpm dev
-
-# 生产构建
-pnpm build:mac    # macOS
-pnpm build:win    # Windows
-pnpm build:linux  # Linux
-```
-
 ### 技术栈
 
 - **框架**: Electron + React 19 + TypeScript
@@ -214,6 +214,12 @@ EnsoAI 专注于 **Git Worktree + AI Agent** 的协作场景。它不是要替�
 | **AI 辅助 Code Review** | 在新 worktree 中让 AI 审查代码，主分支开发不受影响 |
 | **实验性开发** | 创建临时 worktree 让 AI 自由实验，不满意直接删除 |
 | **对比调试** | 同时打开多个 worktree 对比不同实现 |
+
+</details>
+
+<details>
+<summary><strong>为什么使用官方 cli 而不使用 ACP？</strong></summary>
+虽然 ACP 能够统一不同 Agent 的核心能力，但是也仅限于核心能力缺失了很多功能。切换不同 Agent 的场景其实并不多而且不同 Agent 的 cli 核心功能都相似。所以我们认为对于有经验的开发者各cli 更具有生产力。
 
 </details>
 
