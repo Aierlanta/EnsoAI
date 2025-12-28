@@ -1,0 +1,198 @@
+name: Update Package Managers
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name (e.g. v0.1.18)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  update-homebrew:
+    name: Update Homebrew Cask
+    runs-on: macos-latest
+    steps:
+      - name: Set Version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Wait for release assets
+        run: sleep 60
+
+      - name: Download and calculate SHA256
+        id: sha
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          echo "Downloading ARM64 DMG..."
+          curl -sLO "https://github.com/J3n5en/EnsoAI/releases/download/${TAG}/EnsoAI-${VERSION}-arm64.dmg"
+          ARM64_SHA=$(shasum -a 256 "EnsoAI-${VERSION}-arm64.dmg" | cut -d' ' -f1)
+          echo "ARM64 SHA256: $ARM64_SHA"
+
+          echo "Downloading x64 DMG..."
+          curl -sLO "https://github.com/J3n5en/EnsoAI/releases/download/${TAG}/EnsoAI-${VERSION}-x64.dmg"
+          X64_SHA=$(shasum -a 256 "EnsoAI-${VERSION}-x64.dmg" | cut -d' ' -f1)
+          echo "x64 SHA256: $X64_SHA"
+
+          echo "arm64=$ARM64_SHA" >> $GITHUB_OUTPUT
+          echo "x64=$X64_SHA" >> $GITHUB_OUTPUT
+
+      - name: Checkout Homebrew Tap
+        uses: actions/checkout@v4
+        with:
+          repository: J3n5en/homebrew-ensoai
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update Cask
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          ARM64_SHA="${{ steps.sha.outputs.arm64 }}"
+          X64_SHA="${{ steps.sha.outputs.x64 }}"
+
+          cat > homebrew-tap/Casks/ensoai.rb << 'EOF'
+          cask "ensoai" do
+            version "VERSION_PLACEHOLDER"
+            sha256 arm: "ARM64_SHA_PLACEHOLDER",
+                   intel: "X64_SHA_PLACEHOLDER"
+
+            on_arm do
+              url "https://github.com/J3n5en/EnsoAI/releases/download/v#{version}/EnsoAI-#{version}-arm64.dmg"
+            end
+            on_intel do
+              url "https://github.com/J3n5en/EnsoAI/releases/download/v#{version}/EnsoAI-#{version}-x64.dmg"
+            end
+
+            name "EnsoAI"
+            desc "Git Worktree Manager with AI Agent"
+            homepage "https://github.com/J3n5en/EnsoAI"
+
+            livecheck do
+              url :url
+              strategy :github_latest
+            end
+
+            app "EnsoAI.app"
+
+            postflight do
+              system_command "/usr/bin/xattr",
+                             args: ["-dr", "com.apple.quarantine", "#{appdir}/EnsoAI.app"],
+                             sudo: true
+            end
+
+            zap trash: [
+              "~/Library/Application Support/EnsoAI",
+              "~/Library/Preferences/com.ensoai.app.plist",
+              "~/Library/Caches/com.ensoai.app",
+              "~/Library/Saved Application State/com.ensoai.app.savedState",
+            ]
+          end
+          EOF
+
+          sed -i '' "s/VERSION_PLACEHOLDER/${VERSION}/" homebrew-tap/Casks/ensoai.rb
+          sed -i '' "s/ARM64_SHA_PLACEHOLDER/${ARM64_SHA}/" homebrew-tap/Casks/ensoai.rb
+          sed -i '' "s/X64_SHA_PLACEHOLDER/${X64_SHA}/" homebrew-tap/Casks/ensoai.rb
+
+      - name: Commit and Push
+        working-directory: homebrew-tap
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/ensoai.rb
+          git diff --cached --quiet || git commit -m "Update EnsoAI to ${{ steps.version.outputs.tag }}"
+          git push
+
+  update-scoop:
+    name: Update Scoop Bucket
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Wait for release assets
+        run: sleep 60
+
+      - name: Download and calculate SHA256
+        id: sha
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          echo "Downloading portable exe..."
+          curl -sLO "https://github.com/J3n5en/EnsoAI/releases/download/${TAG}/EnsoAI-${VERSION}-portable.exe"
+          HASH=$(sha256sum "EnsoAI-${VERSION}-portable.exe" | cut -d' ' -f1)
+          echo "SHA256: $HASH"
+          echo "hash=$HASH" >> $GITHUB_OUTPUT
+
+      - name: Checkout Scoop Bucket
+        uses: actions/checkout@v4
+        with:
+          repository: J3n5en/scoop-ensoai
+          token: ${{ secrets.SCOOP_BUCKET_TOKEN }}
+          path: scoop-bucket
+
+      - name: Update Manifest
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          HASH="${{ steps.sha.outputs.hash }}"
+
+          cat > scoop-bucket/bucket/ensoai.json << EOF
+          {
+            "version": "${VERSION}",
+            "description": "Git Worktree Manager with AI Agent",
+            "homepage": "https://github.com/J3n5en/EnsoAI",
+            "license": "MIT",
+            "architecture": {
+              "64bit": {
+                "url": "https://github.com/J3n5en/EnsoAI/releases/download/v${VERSION}/EnsoAI-${VERSION}-portable.exe",
+                "hash": "${HASH}"
+              }
+            },
+            "bin": "EnsoAI.exe",
+            "shortcuts": [
+              ["EnsoAI.exe", "EnsoAI"]
+            ],
+            "checkver": {
+              "github": "https://github.com/J3n5en/EnsoAI"
+            },
+            "autoupdate": {
+              "architecture": {
+                "64bit": {
+                  "url": "https://github.com/J3n5en/EnsoAI/releases/download/v\$version/EnsoAI-\$version-portable.exe"
+                }
+              }
+            }
+          }
+          EOF
+
+      - name: Commit and Push
+        working-directory: scoop-bucket
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bucket/ensoai.json
+          git diff --cached --quiet || git commit -m "Update EnsoAI to ${{ steps.version.outputs.tag }}"
+          git push
