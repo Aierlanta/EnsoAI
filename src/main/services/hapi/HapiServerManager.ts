@@ -3,9 +3,12 @@ import { exec, spawn, spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { promisify } from 'node:util';
+import type { ShellConfig } from '@shared/types';
 import { findLoginShell, getEnhancedPath } from '../terminal/PtyManager';
+import { shellDetector } from '../terminal/ShellDetector';
 
 const execAsync = promisify(exec);
+const isWindows = process.platform === 'win32';
 
 export interface HapiConfig {
   webappPort: number;
@@ -33,8 +36,6 @@ export interface HapiStatus {
   error?: string;
 }
 
-const isWindows = process.platform === 'win32';
-
 class HapiServerManager extends EventEmitter {
   private process: ChildProcess | null = null;
   private status: HapiStatus = { running: false };
@@ -49,16 +50,41 @@ class HapiServerManager extends EventEmitter {
   private happyGlobalStatus: HappyGlobalStatus | null = null;
   private happyGlobalCacheTimestamp: number = 0;
 
+  // Shell config for command execution
+  private currentShellConfig: ShellConfig | null = null;
+
   generateToken(): string {
     return randomBytes(32).toString('hex');
   }
 
   /**
-   * Execute command in login shell to load user's environment
+   * Set shell config for command execution
+   */
+  setShellConfig(config: ShellConfig): void {
+    this.currentShellConfig = config;
+  }
+
+  /**
+   * Execute command in login shell to load user's environment.
+   * Uses user's configured shell from settings if available.
    */
   private async execInLoginShell(command: string, timeout = 5000): Promise<string> {
+    const escapedCommand = command.replace(/"/g, '\\"');
+
+    // Use user's configured shell if available
+    if (this.currentShellConfig) {
+      const { shell, execArgs } = shellDetector.resolveShellForCommand(this.currentShellConfig);
+      // Quote shell path in case it contains spaces (e.g., "C:\Program Files\PowerShell\7\pwsh.exe")
+      const fullCommand = `"${shell}" ${execArgs.map((a) => `"${a}"`).join(' ')} "${escapedCommand}"`;
+      // Don't override PATH - let the login shell load environment from profile
+      // This is important for version managers like vfox that initialize in profile
+      const { stdout } = await execAsync(fullCommand, { timeout });
+      return stdout;
+    }
+
+    // Fallback to findLoginShell (uses cmd.exe on Windows, $SHELL on Unix)
     const { shell, args } = findLoginShell();
-    const fullCommand = `${shell} ${args.map((a) => `"${a}"`).join(' ')} "${command.replace(/"/g, '\\"')}"`;
+    const fullCommand = `"${shell}" ${args.map((a) => `"${a}"`).join(' ')} "${escapedCommand}"`;
     const { stdout } = await execAsync(fullCommand, {
       timeout,
       env: { ...process.env, PATH: getEnhancedPath() },
@@ -69,7 +95,15 @@ class HapiServerManager extends EventEmitter {
   /**
    * Check if hapi is globally installed (cached)
    */
-  async checkGlobalInstall(forceRefresh = false): Promise<HapiGlobalStatus> {
+  async checkGlobalInstall(
+    forceRefresh = false,
+    shellConfig?: ShellConfig
+  ): Promise<HapiGlobalStatus> {
+    // Set shell config if provided
+    if (shellConfig) {
+      this.setShellConfig(shellConfig);
+    }
+
     // Return cached result if still valid
     if (
       !forceRefresh &&
@@ -80,14 +114,31 @@ class HapiServerManager extends EventEmitter {
     }
 
     try {
-      const stdout = await this.execInLoginShell('hapi --version', 3000);
+      // Increase timeout to 30000ms - PowerShell profile loading can be slow on first run
+      const stdout = await this.execInLoginShell('hapi --version', 30000);
       const match = stdout.match(/(\d+\.\d+\.\d+)/);
       this.globalStatus = {
         installed: true,
         version: match ? match[1] : undefined,
       };
-    } catch {
+    } catch (error: unknown) {
+      // PowerShell profile may have non-fatal errors (e.g., Set-PSReadLineOption in non-TTY)
+      // Check if stdout contains version info despite the error
+      const execError = error as { stdout?: string };
+      if (execError.stdout) {
+        const match = execError.stdout.match(/(\d+\.\d+\.\d+)/);
+        if (match) {
+          this.globalStatus = {
+            installed: true,
+            version: match[1],
+          };
+          this.globalCacheTimestamp = Date.now();
+          return this.globalStatus;
+        }
+      }
       this.globalStatus = { installed: false };
+      // Don't cache failed result - allow immediate retry
+      return this.globalStatus;
     }
 
     this.globalCacheTimestamp = Date.now();
@@ -98,7 +149,15 @@ class HapiServerManager extends EventEmitter {
    * Check if happy is globally installed (cached)
    * Uses 'which happy' for fast detection, then gets version separately
    */
-  async checkHappyGlobalInstall(forceRefresh = false): Promise<HappyGlobalStatus> {
+  async checkHappyGlobalInstall(
+    forceRefresh = false,
+    shellConfig?: ShellConfig
+  ): Promise<HappyGlobalStatus> {
+    // Set shell config if provided
+    if (shellConfig) {
+      this.setShellConfig(shellConfig);
+    }
+
     // Return cached result if still valid
     if (
       !forceRefresh &&
@@ -109,26 +168,33 @@ class HapiServerManager extends EventEmitter {
     }
 
     try {
-      // First check if happy exists (fast)
-      // Use 'where' on Windows, 'which' on Unix
-      const whichCmd = isWindows ? 'where happy' : 'which happy';
-      await this.execInLoginShell(whichCmd, 2000);
-
-      // If exists, try to get version (may take longer due to claude version check)
-      try {
-        const stdout = await this.execInLoginShell('happy --version', 8000);
-        // Match version from first line: "happy version: X.Y.Z"
-        const match = stdout.match(/happy version:\s*(\d+\.\d+\.\d+)/i);
-        this.happyGlobalStatus = {
-          installed: true,
-          version: match ? match[1] : undefined,
-        };
-      } catch {
-        // Command exists but version check failed, still mark as installed
-        this.happyGlobalStatus = { installed: true };
+      // Directly execute 'happy --version' like CliDetector does for agent detection
+      // This avoids compatibility issues with Get-Command/where.exe/which
+      const stdout = await this.execInLoginShell('happy --version', 30000);
+      // Match version from first line: "happy version: X.Y.Z"
+      const match = stdout.match(/happy version:\s*(\d+\.\d+\.\d+)/i);
+      this.happyGlobalStatus = {
+        installed: true,
+        version: match ? match[1] : undefined,
+      };
+    } catch (error: unknown) {
+      // PowerShell profile may have non-fatal errors (e.g., Set-PSReadLineOption in non-TTY)
+      // Check if stdout contains version info despite the error
+      const execError = error as { stdout?: string };
+      if (execError.stdout) {
+        const match = execError.stdout.match(/happy version:\s*(\d+\.\d+\.\d+)/i);
+        if (match) {
+          this.happyGlobalStatus = {
+            installed: true,
+            version: match[1],
+          };
+          this.happyGlobalCacheTimestamp = Date.now();
+          return this.happyGlobalStatus;
+        }
       }
-    } catch {
       this.happyGlobalStatus = { installed: false };
+      // Don't cache failed result - allow immediate retry
+      return this.happyGlobalStatus;
     }
 
     this.happyGlobalCacheTimestamp = Date.now();
