@@ -68,11 +68,15 @@ export function getEnhancedPath(): string {
 
   if (isWindows) {
     // Windows: Add common Node.js paths
+    const nvmSymlink = process.env.NVM_SYMLINK;
+    const scoopHome = process.env.SCOOP || join(home, 'scoop');
     const additionalPaths = [
       join(home, 'AppData', 'Roaming', 'npm'),
       join(home, '.volta', 'bin'),
-      join(home, 'scoop', 'shims'),
-    ];
+      join(scoopHome, 'shims'),
+      join(home, '.bun', 'bin'),
+      nvmSymlink,
+    ].filter(Boolean) as string[];
     const allPaths = [...new Set([...additionalPaths, ...currentPath.split(delimiter)])];
     return allPaths.join(delimiter);
   }
