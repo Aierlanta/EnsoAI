@@ -194,6 +194,9 @@ export class PtyManager {
           PATH: getEnhancedPath(),
           TERM: 'xterm-256color',
           COLORTERM: 'truecolor',
+          // Ensure proper locale for UTF-8 support (GUI apps may not inherit LANG)
+          LANG: process.env.LANG || 'en_US.UTF-8',
+          LC_ALL: process.env.LC_ALL || process.env.LANG || 'en_US.UTF-8',
         } as Record<string, string>,
       });
     } catch (error) {
@@ -213,6 +216,9 @@ export class PtyManager {
               PATH: getEnhancedPath(),
               TERM: 'xterm-256color',
               COLORTERM: 'truecolor',
+              // Ensure proper locale for UTF-8 support (GUI apps may not inherit LANG)
+              LANG: process.env.LANG || 'en_US.UTF-8',
+              LC_ALL: process.env.LC_ALL || process.env.LANG || 'en_US.UTF-8',
             } as Record<string, string>,
           });
           shell = fallbackShell;
