@@ -73,6 +73,8 @@ export interface UseXtermResult {
   clearSearch: () => void;
   /** Clear terminal display */
   clear: () => void;
+  /** Manually refresh renderer (clear WebGL atlas + refresh) */
+  refreshRenderer: () => void;
 }
 
 function useTerminalSettings() {
@@ -199,6 +201,19 @@ export function useXterm({
 
   const clear = useCallback(() => {
     terminalRef.current?.clear();
+  }, []);
+
+  const refreshRenderer = useCallback(() => {
+    if (!terminalRef.current) return;
+    const addon = rendererAddonRef.current;
+    if (addon && 'clearTextureAtlas' in addon) {
+      try {
+        (addon as WebglAddon).clearTextureAtlas();
+      } catch {
+        // Ignore
+      }
+    }
+    terminalRef.current.refresh(0, terminalRef.current.rows - 1);
   }, []);
 
   const loadRenderer = useCallback((terminal: Terminal, renderer: typeof terminalRenderer) => {
@@ -698,5 +713,6 @@ export function useXterm({
     findPrevious,
     clearSearch,
     clear,
+    refreshRenderer,
   };
 }

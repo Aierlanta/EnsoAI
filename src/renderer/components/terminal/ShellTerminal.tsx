@@ -28,6 +28,7 @@ export function ShellTerminal({
     clearSearch,
     terminal,
     clear,
+    refreshRenderer,
   } = useXterm({
     cwd,
     isActive,
@@ -69,6 +70,7 @@ export function ShellTerminal({
 
       const selectedId = await window.electronAPI.contextMenu.show([
         { id: 'clear', label: t('Clear terminal') },
+        { id: 'refresh', label: t('Refresh terminal') },
         { id: 'separator-1', label: '', type: 'separator' },
         { id: 'copy', label: t('Copy'), disabled: !terminal?.hasSelection() },
         { id: 'paste', label: t('Paste') },
@@ -80,6 +82,9 @@ export function ShellTerminal({
       switch (selectedId) {
         case 'clear':
           clear();
+          break;
+        case 'refresh':
+          refreshRenderer();
           break;
         case 'copy':
           if (terminal?.hasSelection()) {
@@ -97,7 +102,7 @@ export function ShellTerminal({
           break;
       }
     },
-    [terminal, clear, t]
+    [terminal, clear, refreshRenderer, t]
   );
 
   useEffect(() => {

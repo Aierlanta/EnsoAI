@@ -381,6 +381,7 @@ export function AgentTerminal({
     clearSearch,
     terminal,
     clear,
+    refreshRenderer,
   } = useXterm({
     cwd,
     command,
@@ -416,6 +417,7 @@ export function AgentTerminal({
 
       const selectedId = await window.electronAPI.contextMenu.show([
         { id: 'clear', label: t('Clear terminal') },
+        { id: 'refresh', label: t('Refresh terminal') },
         { id: 'separator-1', label: '', type: 'separator' },
         { id: 'copy', label: t('Copy'), disabled: !terminal?.hasSelection() },
         { id: 'paste', label: t('Paste') },
@@ -427,6 +429,9 @@ export function AgentTerminal({
       switch (selectedId) {
         case 'clear':
           clear();
+          break;
+        case 'refresh':
+          refreshRenderer();
           break;
         case 'copy':
           if (terminal?.hasSelection()) {
@@ -444,7 +449,7 @@ export function AgentTerminal({
           break;
       }
     },
-    [terminal, clear, t]
+    [terminal, clear, refreshRenderer, t]
   );
 
   useEffect(() => {
