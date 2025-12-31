@@ -167,11 +167,15 @@ export function TreeSidebar({
     return () => clearInterval(interval);
   }, [worktreesMap, activities, fetchDiffStats]);
 
-  // Auto-expand selected repo
+  // Auto-expand selected repo (only when selectedRepo changes, not when expandedRepos changes)
+  const prevSelectedRepoRef = useRef<string | null>(null);
   useEffect(() => {
-    if (selectedRepo && !expandedRepos.has(selectedRepo)) {
-      setExpandedRepoList((prev) => [...prev, selectedRepo]);
+    if (selectedRepo && selectedRepo !== prevSelectedRepoRef.current) {
+      if (!expandedRepos.has(selectedRepo)) {
+        setExpandedRepoList((prev) => [...prev, selectedRepo]);
+      }
     }
+    prevSelectedRepoRef.current = selectedRepo;
   }, [selectedRepo, expandedRepos]);
 
   const toggleRepoExpanded = useCallback((repoPath: string) => {
