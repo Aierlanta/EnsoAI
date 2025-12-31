@@ -294,8 +294,13 @@ ${truncatedDiff}`;
           }
 
           try {
-            // 清理 stdout，提取 JSON 对象（可能有额外的日志输出）
-            let jsonStr = stdout.trim();
+            // 清理 ANSI 转义码（与 StreamJsonParser 保持一致）
+            // biome-ignore lint/complexity/useRegexLiterals: Using RegExp constructor to avoid control character lint error
+            const ansiRegex = new RegExp(
+              '[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]',
+              'g'
+            );
+            let jsonStr = stdout.replace(ansiRegex, '').trim();
 
             // 尝试找到第一个完整的 JSON 对象
             const jsonStart = jsonStr.indexOf('{');
