@@ -109,7 +109,7 @@ jobs:
             echo "| Windows (x64 安装版) | [EnsoAI-Setup-${VERSION}.exe](https://github.com/${{ github.repository }}/releases/download/${TAG}/EnsoAI-Setup-${VERSION}.exe) |"
             echo "| Windows (x64 便携版) | [EnsoAI-${VERSION}-portable.exe](https://github.com/${{ github.repository }}/releases/download/${TAG}/EnsoAI-${VERSION}-portable.exe) |"
             echo "| Linux (x64 AppImage) | [EnsoAI-${VERSION}.AppImage](https://github.com/${{ github.repository }}/releases/download/${TAG}/EnsoAI-${VERSION}.AppImage) |"
-            echo "| Linux (x64 deb) | [ensoai_${VERSION}_amd64.deb](https://github.com/${{ github.repository }}/releases/download/${TAG}/ensoai_${VERSION}_amd64.deb) |"
+            echo "| Linux (x64 deb) | [enso-ai_${VERSION}_amd64.deb](https://github.com/${{ github.repository }}/releases/download/${TAG}/enso-ai_${VERSION}_amd64.deb) |"
             echo ""
             echo "---"
             echo ""
