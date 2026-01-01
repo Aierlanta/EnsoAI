@@ -10,6 +10,7 @@ import { useCodeReviewContinueStore } from '@/stores/codeReviewContinue';
 import { BUILTIN_AGENT_IDS, useSettingsStore } from '@/stores/settings';
 import { useWorktreeActivityStore } from '@/stores/worktreeActivity';
 import { AgentGroup } from './AgentGroup';
+import { AgentTerminal } from './AgentTerminal';
 import type { Session } from './SessionBar';
 import type { AgentGroupState, AgentGroup as AgentGroupType } from './types';
 import { createInitialGroupState } from './types';
@@ -98,9 +99,6 @@ function createSession(
   };
 }
 
-// Per-worktree group states
-type WorktreeGroupStates = Record<string, AgentGroupState>;
-
 export function AgentPanel({ repoPath, cwd, isActive = false, onSwitchWorktree }: AgentPanelProps) {
   const { t } = useI18n();
   const { agentSettings, agentDetectionStatus, customAgents, agentKeybindings, hapiSettings } =
@@ -108,15 +106,21 @@ export function AgentPanel({ repoPath, cwd, isActive = false, onSwitchWorktree }
   const defaultAgentId = useMemo(() => getDefaultAgentId(agentSettings), [agentSettings]);
   const { setAgentCount, registerAgentCloseHandler } = useWorktreeActivityStore();
 
-  // Group state management per worktree
-  const [worktreeGroupStates, setWorktreeGroupStates] = useState<WorktreeGroupStates>({});
+  // Global session IDs to keep terminals mounted across group moves
+  const [globalSessionIds, setGlobalSessionIds] = useState<Set<string>>(new Set());
 
-  // Use zustand store for sessions - state persists even when component unmounts
+  // Use zustand store for sessions and group states - state persists even when component unmounts
   const allSessions = useAgentSessionsStore((state) => state.sessions);
   const addSession = useAgentSessionsStore((state) => state.addSession);
   const removeSession = useAgentSessionsStore((state) => state.removeSession);
   const updateSession = useAgentSessionsStore((state) => state.updateSession);
   const setActiveId = useAgentSessionsStore((state) => state.setActiveId);
+
+  // Group states from store (persists across component remounts)
+  const worktreeGroupStates = useAgentSessionsStore((state) => state.groupStates);
+  const setGroupState = useAgentSessionsStore((state) => state.setGroupState);
+  const updateGroupState = useAgentSessionsStore((state) => state.updateGroupState);
+  const removeGroupState = useAgentSessionsStore((state) => state.removeGroupState);
 
   // Get current worktree's group state
   const currentGroupState = useMemo(() => {
@@ -127,17 +131,13 @@ export function AgentPanel({ repoPath, cwd, isActive = false, onSwitchWorktree }
 
   const { groups, activeGroupId } = currentGroupState;
 
-  // Update group state helper
+  // Update group state helper - uses store instead of local state
   const updateCurrentGroupState = useCallback(
     (updater: (state: AgentGroupState) => AgentGroupState) => {
       if (!cwd) return;
-      const normalizedCwd = normalizePath(cwd);
-      setWorktreeGroupStates((prev) => ({
-        ...prev,
-        [normalizedCwd]: updater(prev[normalizedCwd] || createInitialGroupState()),
-      }));
+      updateGroupState(cwd, updater);
     },
-    [cwd]
+    [cwd, updateGroupState]
   );
 
   // Filter sessions for current repo+worktree (for SessionBar display, sorted by displayOrder)
@@ -218,19 +218,14 @@ export function AgentPanel({ repoPath, cwd, isActive = false, onSwitchWorktree }
       }
 
       // Remove group state for this worktree
-      const normalizedPath = normalizePath(worktreePath);
-      setWorktreeGroupStates((prev) => {
-        const newStates = { ...prev };
-        delete newStates[normalizedPath];
-        return newStates;
-      });
+      removeGroupState(worktreePath);
 
       // Set count to 0
       setAgentCount(worktreePath, 0);
     };
 
     return registerAgentCloseHandler(handleCloseAll);
-  }, [registerAgentCloseHandler, setAgentCount, allSessions, removeSession]);
+  }, [registerAgentCloseHandler, setAgentCount, allSessions, removeSession, removeGroupState]);
 
   // Handle new session in active group
   const handleNewSession = useCallback(
@@ -813,16 +808,35 @@ export function AgentPanel({ repoPath, cwd, isActive = false, onSwitchWorktree }
         sessionIds,
         activeSessionId: sessionIds[0] || null,
       };
-      setWorktreeGroupStates((prev) => ({
-        ...prev,
-        [normalizedCwd]: {
-          groups: [newGroup],
-          activeGroupId: newGroup.id,
-          flexPercents: [100],
-        },
-      }));
+      setGroupState(cwd, {
+        groups: [newGroup],
+        activeGroupId: newGroup.id,
+        flexPercents: [100],
+      });
     }
-  }, [cwd, currentWorktreeSessions, worktreeGroupStates]);
+  }, [cwd, currentWorktreeSessions, worktreeGroupStates, setGroupState]);
+
+  // Maintain global session IDs - include ALL sessions across all repos
+  // This ensures terminals stay mounted when switching between repos
+  useEffect(() => {
+    const allSessionIds = allSessions.map((s) => s.id);
+    const allSessionIdSet = new Set(allSessionIds);
+
+    setGlobalSessionIds((prev) => {
+      const next = new Set(prev);
+      // Add new sessions
+      for (const id of allSessionIds) {
+        next.add(id);
+      }
+      // Remove sessions that no longer exist
+      for (const id of next) {
+        if (!allSessionIdSet.has(id)) {
+          next.delete(id);
+        }
+      }
+      return next;
+    });
+  }, [allSessions]);
 
   // Agent session keyboard shortcuts
   useEffect(() => {
@@ -889,10 +903,35 @@ export function AgentPanel({ repoPath, cwd, isActive = false, onSwitchWorktree }
 
   if (!cwd) return null;
 
-  const normalizedCwd = normalizePath(cwd);
-
   // Check if there are any groups
   const hasAnyGroups = Object.keys(worktreeGroupStates).length > 0;
+
+  // Helper to find session info (which worktree, group, index)
+  const findSessionInfo = (sessionId: string) => {
+    for (const [worktreePath, state] of Object.entries(worktreeGroupStates)) {
+      for (let groupIndex = 0; groupIndex < state.groups.length; groupIndex++) {
+        const group = state.groups[groupIndex];
+        if (group.sessionIds.includes(sessionId)) {
+          const session = allSessions.find((s) => s.id === sessionId);
+          if (session) {
+            return { worktreePath, state, group, groupIndex, session };
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  // Calculate cumulative left positions for groups
+  const getGroupPositions = (state: AgentGroupState) => {
+    const positions: { left: number; width: number }[] = [];
+    let cumulative = 0;
+    for (const percent of state.flexPercents) {
+      positions.push({ left: cumulative, width: percent });
+      cumulative += percent;
+    }
+    return positions;
+  };
 
   // If no groups and no sessions, show empty state
   if (!hasAnyGroups && currentWorktreeSessions.length === 0) {
@@ -966,60 +1005,139 @@ export function AgentPanel({ repoPath, cwd, isActive = false, onSwitchWorktree }
     );
   }
 
+  // Get current worktree's group positions for terminal placement
+  const currentGroupPositions = getGroupPositions(currentGroupState);
+
   return (
     <div className="relative h-full w-full">
-      {/* Render all worktrees' groups to keep terminals mounted */}
-      {Object.entries(worktreeGroupStates).map(([worktreePath, state]) => {
-        const isCurrentWorktree = worktreePath === normalizedCwd;
-        const worktreeSessions = allSessions.filter(
-          (s) => s.repoPath === repoPath && pathsEqual(s.cwd, worktreePath)
-        );
+      {/* Resize handles - only for current worktree */}
+      {currentGroupState.groups.length > 1 &&
+        currentGroupState.groups.map((group, index) => {
+          if (index >= currentGroupState.groups.length - 1) return null;
+          const leftPos = currentGroupPositions
+            .slice(0, index + 1)
+            .reduce((sum, p) => sum + p.width, 0);
+          return (
+            <ResizeHandle
+              key={`resize-${group.id}`}
+              style={{ left: `${leftPos}%` }}
+              onResize={(delta) => handleResize(index, delta)}
+            />
+          );
+        })}
+
+      {/* All terminals - rendered in a SINGLE container with stable sessionId keys */}
+      {/* This container is NOT inside any worktree-specific wrapper, ensuring stable mounting */}
+      {/* All sessions across ALL repos are rendered here to keep them mounted */}
+      <div className="absolute inset-0 z-0">
+        {Array.from(globalSessionIds).map((sessionId) => {
+          const session = allSessions.find((s) => s.id === sessionId);
+          if (!session) return null;
+
+          // Check if this session belongs to current repo
+          const isCurrentRepo = session.repoPath === repoPath;
+
+          // Find session's group info for positioning
+          const info = findSessionInfo(sessionId);
+
+          // Determine if this session belongs to current worktree
+          const isCurrentWorktree = isCurrentRepo && pathsEqual(session.cwd, cwd);
+
+          // Calculate position - if no group info, use full width
+          let left = 0;
+          let width = 100;
+          let isSessionVisible = true;
+          let groupId: string | null = null;
+
+          if (info) {
+            const positions = getGroupPositions(info.state);
+            const position = positions[info.groupIndex];
+            if (position) {
+              left = position.left;
+              width = position.width;
+            }
+            isSessionVisible = info.group.activeSessionId === sessionId;
+            groupId = info.group.id;
+          }
+
+          const isGroupActive = groupId === currentGroupState.activeGroupId;
+          const isTerminalActive =
+            isActive && isCurrentWorktree && isSessionVisible && isGroupActive;
+
+          // Only show terminals from current repo + current worktree + active session
+          const shouldShow = isCurrentRepo && isCurrentWorktree && isSessionVisible;
+
+          return (
+            <div
+              key={sessionId}
+              className={
+                shouldShow ? 'absolute h-full' : 'absolute h-full opacity-0 pointer-events-none'
+              }
+              style={{
+                left: `${left}%`,
+                width: `${width}%`,
+              }}
+            >
+              {/* Inactive overlay - like TerminalGroup */}
+              {shouldShow && !isGroupActive && (
+                <div className="absolute inset-0 z-10 bg-background/10 pointer-events-none" />
+              )}
+              <AgentTerminal
+                cwd={session.cwd}
+                sessionId={session.id}
+                agentCommand={session.agentCommand || 'claude'}
+                customPath={session.customPath}
+                customArgs={session.customArgs}
+                environment={session.environment || 'native'}
+                initialized={session.initialized}
+                activated={session.activated}
+                isActive={isTerminalActive}
+                onInitialized={() => handleInitialized(sessionId)}
+                onActivated={() => handleActivated(sessionId)}
+                onExit={() => handleCloseSession(sessionId, groupId || undefined)}
+                onTerminalTitleChange={(title) => updateSession(sessionId, { terminalTitle: title })}
+                onSplit={() => groupId && handleSplit(groupId)}
+                canMerge={info ? info.groupIndex > 0 : false}
+                onMerge={() => groupId && handleMerge(groupId)}
+                onFocus={() => groupId && handleGroupClick(groupId)}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Session bars (floating) - rendered for each group in current worktree */}
+      {/* pointer-events-none on container, AgentGroup handles its own pointer-events */}
+      {currentGroupState.groups.map((group, index) => {
+        const position = currentGroupPositions[index];
+        if (!position) return null;
 
         return (
           <div
-            key={worktreePath}
-            className={
-              isCurrentWorktree
-                ? 'flex h-full w-full'
-                : 'absolute inset-0 opacity-0 pointer-events-none'
-            }
+            key={`group-ui-${group.id}`}
+            className="absolute top-0 bottom-0 z-10 pointer-events-none overflow-hidden"
+            style={{
+              left: `${position.left}%`,
+              width: `${position.width}%`,
+            }}
           >
-            {state.groups.map((group, index) => (
-              <div
-                key={group.id}
-                className="flex h-full"
-                style={{ flex: `0 0 ${state.flexPercents[index]}%` }}
-              >
-                <AgentGroup
-                  group={group}
-                  sessions={worktreeSessions}
-                  isActive={isActive && isCurrentWorktree}
-                  isGroupActive={group.id === state.activeGroupId}
-                  enabledAgents={enabledAgents}
-                  customAgents={customAgents}
-                  agentSettings={agentSettings}
-                  agentInfo={AGENT_INFO}
-                  onSessionSelect={(id) => handleSelectSession(id, group.id)}
-                  onSessionClose={(id) => handleCloseSession(id, group.id)}
-                  onSessionNew={() => handleNewSession(group.id)}
-                  onSessionNewWithAgent={(agentId, cmd) =>
-                    handleNewSessionWithAgent(agentId, cmd, group.id)
-                  }
-                  onSessionRename={handleRenameSession}
-                  onSessionReorder={(from, to) => handleReorderSessions(group.id, from, to)}
-                  onSessionInitialized={handleInitialized}
-                  onSessionActivated={handleActivated}
-                  onSessionTerminalTitleChange={handleSessionTerminalTitleChange}
-                  onGroupClick={() => handleGroupClick(group.id)}
-                  onSplit={() => handleSplit(group.id)}
-                  canMerge={index > 0}
-                  onMerge={() => handleMerge(group.id)}
-                />
-                {index < state.groups.length - 1 && (
-                  <ResizeHandle onResize={(delta) => handleResize(index, delta)} />
-                )}
-              </div>
-            ))}
+            <AgentGroup
+              group={group}
+              sessions={currentWorktreeSessions}
+              enabledAgents={enabledAgents}
+              customAgents={customAgents}
+              agentSettings={agentSettings}
+              agentInfo={AGENT_INFO}
+              onSessionSelect={(id) => handleSelectSession(id, group.id)}
+              onSessionClose={(id) => handleCloseSession(id, group.id)}
+              onSessionNew={() => handleNewSession(group.id)}
+              onSessionNewWithAgent={(agentId, cmd) =>
+                handleNewSessionWithAgent(agentId, cmd, group.id)
+              }
+              onSessionRename={handleRenameSession}
+              onSessionReorder={(from, to) => handleReorderSessions(group.id, from, to)}
+              onGroupClick={() => handleGroupClick(group.id)}
+            />
           </div>
         );
       })}
