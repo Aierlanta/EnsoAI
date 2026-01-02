@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, Circle, Pencil, Plus, Save, Trash2 } from 'lucide-react';
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { toastManager } from '@/components/ui/toast';
 import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { useSettingsStore } from '@/stores/settings';
@@ -51,6 +52,11 @@ export function ProviderList({ className }: ProviderListProps) {
     const success = await window.electronAPI.claudeProvider.apply(provider);
     if (success) {
       queryClient.invalidateQueries({ queryKey: ['claude-settings'] });
+      toastManager.add({
+        type: 'success',
+        title: t('Provider switched'),
+        description: provider.name,
+      });
     }
   };
 

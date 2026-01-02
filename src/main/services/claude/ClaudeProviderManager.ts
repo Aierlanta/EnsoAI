@@ -68,7 +68,15 @@ export function applyProvider(provider: ClaudeProvider): boolean {
     }
 
     // 保留现有 env 中非 Provider 字段
-    const existingEnv = settings.env ?? {};
+    const existingEnv = { ...(settings.env ?? {}) };
+
+    // 先清除所有 Provider 相关字段（防止残留）
+    delete existingEnv.ANTHROPIC_BASE_URL;
+    delete existingEnv.ANTHROPIC_AUTH_TOKEN;
+    delete existingEnv.ANTHROPIC_SMALL_FAST_MODEL;
+    delete existingEnv.ANTHROPIC_DEFAULT_SONNET_MODEL;
+    delete existingEnv.ANTHROPIC_DEFAULT_OPUS_MODEL;
+    delete existingEnv.ANTHROPIC_DEFAULT_HAIKU_MODEL;
 
     // 构建 Provider env 字段
     const providerEnv: Record<string, string> = {
@@ -93,9 +101,11 @@ export function applyProvider(provider: ClaudeProvider): boolean {
     // 合并 env（Provider 字段覆盖现有值）
     settings.env = { ...existingEnv, ...providerEnv };
 
-    // 设置 model 字段
+    // 设置/清除 model 字段
     if (provider.model) {
       settings.model = provider.model;
+    } else {
+      delete settings.model;
     }
 
     // 确保目录存在

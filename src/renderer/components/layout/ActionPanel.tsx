@@ -217,8 +217,13 @@ export function ActionPanel({
 
   const applyProvider = useMutation({
     mutationFn: (provider: ClaudeProvider) => window.electronAPI.claudeProvider.apply(provider),
-    onSuccess: () => {
+    onSuccess: (_, provider) => {
       queryClient.invalidateQueries({ queryKey: ['claude-settings'] });
+      toastManager.add({
+        type: 'success',
+        title: t('Provider switched'),
+        description: provider.name,
+      });
     },
   });
 

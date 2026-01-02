@@ -1,19 +1,19 @@
 import type { ClaudeProvider } from '@shared/types';
-import { useQueryClient } from '@tanstack/react-query';
+import { Eye, EyeOff } from 'lucide-react';
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogBackdrop,
   DialogClose,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogPanel,
+  DialogPopup,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useI18n } from '@/i18n';
 import { useSettingsStore } from '@/stores/settings';
 
@@ -31,13 +31,13 @@ export function ProviderDialog({
   initialValues,
 }: ProviderDialogProps) {
   const { t } = useI18n();
-  const queryClient = useQueryClient();
   const addClaudeProvider = useSettingsStore((s) => s.addClaudeProvider);
   const updateClaudeProvider = useSettingsStore((s) => s.updateClaudeProvider);
 
   const isEditing = !!provider;
 
   // 表单状态
+  const [showToken, setShowToken] = React.useState(false);
   const [name, setName] = React.useState('');
   const [baseUrl, setBaseUrl] = React.useState('');
   const [authToken, setAuthToken] = React.useState('');
@@ -50,6 +50,7 @@ export function ProviderDialog({
   // 初始化表单
   React.useEffect(() => {
     if (open) {
+      setShowToken(false);
       if (provider) {
         setName(provider.name);
         setBaseUrl(provider.baseUrl);
@@ -102,9 +103,6 @@ export function ProviderDialog({
       updateClaudeProvider(provider.id, providerData);
     } else {
       addClaudeProvider(providerData);
-      // 新建后自动应用
-      await window.electronAPI.claudeProvider.apply(providerData);
-      queryClient.invalidateQueries({ queryKey: ['claude-settings'] });
     }
 
     onOpenChange(false);
@@ -114,119 +112,120 @@ export function ProviderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogBackdrop />
-      <DialogContent className="max-w-md">
+      <DialogPopup>
         <DialogHeader>
           <DialogTitle>{isEditing ? t('Edit Provider') : t('Add Provider')}</DialogTitle>
           <DialogDescription>{t('Configure Claude API provider settings')}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <DialogPanel className="space-y-4">
           {/* 名称 */}
-          <div className="grid gap-2">
-            <Label htmlFor="name">{t('Name')} *</Label>
+          <Field>
+            <FieldLabel>{t('Name')} *</FieldLabel>
             <Input
-              id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('e.g., Official API')}
             />
-          </div>
+          </Field>
 
           {/* Base URL */}
-          <div className="grid gap-2">
-            <Label htmlFor="baseUrl">{t('Base URL')} *</Label>
+          <Field>
+            <FieldLabel>{t('Base URL')} *</FieldLabel>
             <Input
-              id="baseUrl"
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
               placeholder="https://api.anthropic.com"
             />
-          </div>
+          </Field>
 
           {/* Auth Token */}
-          <div className="grid gap-2">
-            <Label htmlFor="authToken">{t('Auth Token')} *</Label>
-            <Input
-              id="authToken"
-              type="password"
-              value={authToken}
-              onChange={(e) => setAuthToken(e.target.value)}
-              placeholder="sk-ant-..."
-            />
-          </div>
+          <Field>
+            <FieldLabel>{t('Auth Token')} *</FieldLabel>
+            <div className="relative w-full">
+              <Input
+                type={showToken ? 'text' : 'password'}
+                value={authToken}
+                onChange={(e) => setAuthToken(e.target.value)}
+                placeholder="sk-ant-..."
+                className="pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowToken(!showToken)}
+              >
+                {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </Field>
 
           {/* 可选字段 - 折叠区域 */}
           <details className="group">
             <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
               {t('Advanced Options')}
             </summary>
-            <div className="mt-3 grid gap-3">
+            <div className="mt-3 space-y-3">
               {/* Model */}
-              <div className="grid gap-2">
-                <Label htmlFor="model">{t('Model')}</Label>
+              <Field>
+                <FieldLabel>{t('Model')}</FieldLabel>
                 <Input
-                  id="model"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
                   placeholder="opus / sonnet / haiku"
                 />
-              </div>
+              </Field>
 
               {/* Small Fast Model */}
-              <div className="grid gap-2">
-                <Label htmlFor="smallFastModel">{t('Small/Fast Model')}</Label>
+              <Field>
+                <FieldLabel>{t('Small/Fast Model')}</FieldLabel>
                 <Input
-                  id="smallFastModel"
                   value={smallFastModel}
                   onChange={(e) => setSmallFastModel(e.target.value)}
                   placeholder="claude-3-haiku-..."
                 />
-              </div>
+              </Field>
 
               {/* Default Sonnet Model */}
-              <div className="grid gap-2">
-                <Label htmlFor="defaultSonnetModel">{t('Sonnet Model')}</Label>
+              <Field>
+                <FieldLabel>{t('Sonnet Model')}</FieldLabel>
                 <Input
-                  id="defaultSonnetModel"
                   value={defaultSonnetModel}
                   onChange={(e) => setDefaultSonnetModel(e.target.value)}
                   placeholder="claude-sonnet-4-..."
                 />
-              </div>
+              </Field>
 
               {/* Default Opus Model */}
-              <div className="grid gap-2">
-                <Label htmlFor="defaultOpusModel">{t('Opus Model')}</Label>
+              <Field>
+                <FieldLabel>{t('Opus Model')}</FieldLabel>
                 <Input
-                  id="defaultOpusModel"
                   value={defaultOpusModel}
                   onChange={(e) => setDefaultOpusModel(e.target.value)}
                   placeholder="claude-opus-4-..."
                 />
-              </div>
+              </Field>
 
               {/* Default Haiku Model */}
-              <div className="grid gap-2">
-                <Label htmlFor="defaultHaikuModel">{t('Haiku Model')}</Label>
+              <Field>
+                <FieldLabel>{t('Haiku Model')}</FieldLabel>
                 <Input
-                  id="defaultHaikuModel"
                   value={defaultHaikuModel}
                   onChange={(e) => setDefaultHaikuModel(e.target.value)}
                   placeholder="claude-3-haiku-..."
                 />
-              </div>
+              </Field>
             </div>
           </details>
-        </div>
+        </DialogPanel>
 
-        <DialogFooter>
+        <DialogFooter variant="bare">
           <DialogClose render={<Button variant="outline">{t('Cancel')}</Button>} />
           <Button onClick={handleSave} disabled={!isValid}>
             {isEditing ? t('Save') : t('Add')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </DialogPopup>
     </Dialog>
   );
 }

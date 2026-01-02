@@ -748,6 +748,7 @@ export const zhTranslations: Record<string, string> = {
   'Sonnet Model': 'Sonnet 模型',
   'Opus Model': 'Opus 模型',
   'Haiku Model': 'Haiku 模型',
+  'Provider switched': '已切换 Provider',
 };
 
 export function normalizeLocale(input?: string): Locale {
