@@ -5,14 +5,15 @@
 <h1 align="center">EnsoAI</h1>
 
 <p align="center">
-  <strong>多路智能，并行穿梭</strong>
+  <strong>Multiple Agents, Parallel Flow</strong>
 </p>
 <p align="center">
-  让多路 AI 助手化身并行线程，在同一个项目的不同分支间自由穿梭。<br/>
-  Claude、Gemini 与 Codex 同步协作，思路永不中断。
+  Unleash parallel intelligence within a single project.<br/>
+  Let Claude, Gemini, and Codex weave through different worktrees simultaneously without context switching.
 </p>
+
 <p align="center">
-  <a href="README.md">中文</a> | <a href="README.en.md">English</a>
+  <a href="README.zh.md">中文</a> | <a href="README.md">English</a>
 </p>
 
 <p align="center">
@@ -24,23 +25,27 @@
 </p>
 
 <p align="center">
-  <a href="https://t.me/EnsoAI_news"><img src="https://img.shields.io/badge/更新频道-Telegram-26A5E4?logo=telegram&logoColor=white" alt="Telegram Channel" /></a>
-  <a href="https://t.me/EnsoAi_Offical"><img src="https://img.shields.io/badge/官方交流群-Telegram-26A5E4?logo=telegram&logoColor=white" alt="Telegram Group" /></a>
+  <a href="https://t.me/EnsoAI_news"><img src="https://img.shields.io/badge/Updates-Telegram-26A5E4?logo=telegram&logoColor=white" alt="Telegram Channel" /></a>
+  <a href="https://t.me/EnsoAi_Offical"><img src="https://img.shields.io/badge/Community-Telegram-26A5E4?logo=telegram&logoColor=white" alt="Telegram Group" /></a>
+</p>
+
+<p align="center">
+  <a href="https://www.producthunt.com/products/ensoai?utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-ensoai" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1057621&theme=light" alt="EnsoAI - Multiple AI Agents, Parallel Workflow in Git Worktrees | Product Hunt" width="250" height="54" /></a>
 </p>
 
 ---
 
-## 重构你的工作流
+## Workflow, Reimagined.
 
-告别 git stash。EnsoAI 将每个分支视为一等公民，赋予其独立的工作区与 AI 上下文。
+Stop stashing and popping. EnsoAI treats every branch as a first-class workspace with its own dedicated AI context.
 
-![EnsoAI 终端](docs/assets/feature-terminal.png)
+![EnsoAI Terminal](docs/assets/feature-terminal.png)
 
 ---
 
-## 安装
+## Installation
 
-### 包管理器（推荐）
+### Package Managers (Recommended)
 
 **macOS (Homebrew)**
 
@@ -62,33 +67,33 @@ scoop install ensoai
 winget install J3n5en.EnsoAI
 ```
 
-### 手动下载
+### Manual Download
 
-从 [GitHub Releases](https://github.com/J3n5en/EnsoAI/releases/latest) 下载适合你平台的安装包：
+Download the installer for your platform from [GitHub Releases](https://github.com/J3n5en/EnsoAI/releases/latest):
 
-| 平台 | 文件 |
-|------|------|
+| Platform | File |
+|----------|------|
 | macOS (Apple Silicon) | `EnsoAI-x.x.x-arm64.dmg` |
 | macOS (Intel) | `EnsoAI-x.x.x.dmg` |
-| Windows (安装版) | `EnsoAI-Setup-x.x.x.exe` |
-| Windows (便携版) | `EnsoAI-x.x.x-portable.exe` |
+| Windows (Installer) | `EnsoAI-Setup-x.x.x.exe` |
+| Windows (Portable) | `EnsoAI-x.x.x-portable.exe` |
 | Linux (AppImage) | `EnsoAI-x.x.x.AppImage` |
 | Linux (deb) | `ensoai_x.x.x_amd64.deb` |
 
-### 从源码构建
+### Build from Source
 
 ```bash
-# 克隆仓库
+# Clone the repository
 git clone https://github.com/J3n5en/EnsoAI.git
 cd EnsoAI
 
-# 安装依赖（需要 Node.js 20+、pnpm 10+）
+# Install dependencies (requires Node.js 20+, pnpm 10+)
 pnpm install
 
-# 开发模式运行
+# Run in development mode
 pnpm dev
 
-# 生产构建
+# Build for production
 pnpm build:mac    # macOS
 pnpm build:win    # Windows
 pnpm build:linux  # Linux
@@ -96,253 +101,253 @@ pnpm build:linux  # Linux
 
 ---
 
-## 功能特性
+## Features
 
-### 多 Agent 矩阵
+### Multi-Agent Matrix
 
-无缝切换 Claude、Codex、Gemini 或本地 LLM。每个 Worktree 都有独立的持久化 AI 会话。
+Seamlessly switch between Claude, Codex, Gemini, and local LLMs. Each worktree gets its own persistent AI session.
 
-![多 Agent 矩阵](docs/assets/feature-terminal.png)
+![Multi-Agent Matrix](docs/assets/feature-terminal.png)
 
-内置支持：
-- **Claude** - Anthropic 的 AI 助手，支持会话持久化
-- **Codex** - OpenAI 的编程助手
-- **Gemini** - Google 的 AI 助手
-- **Cursor** - Cursor 的 AI 助手 (`cursor-agent`)
-- **Droid** - Factory CLI，AI 驱动的 CI/CD 助手
-- **Auggie** - Augment Code 的 AI 助手
+Built-in support:
+- **Claude** - Anthropic's AI assistant with session persistence
+- **Codex** - OpenAI's coding assistant
+- **Gemini** - Google's AI assistant
+- **Cursor** - Cursor's AI agent (`cursor-agent`)
+- **Droid** - Factory CLI for AI-powered CI/CD
+- **Auggie** - Augment Code's AI assistant
 
-你也可以通过指定 CLI 命令来添加自定义 Agent。
-
----
-
-### 内置 Git 管理器
-
-优雅的可视化 Git 面板。通过键盘即可完成差异对比、暂存修改和提交代码。
-
-![Git 管理器](docs/assets/feature-editor.png)
-
-- 变更列表显示所有修改的文件
-- 支持暂存/取消暂存操作
-- 提交历史浏览
-- 代码差异对比视图
+You can also add custom agents by specifying the CLI command.
 
 ---
 
-### 内置代码编辑器
+### Visual Source Control
 
-基于 Monaco 构建的轻量级编辑器。支持 50+ 种语言高亮，提供流畅的多标签拖拽体验。
+Review diffs, stage changes, and manage commits with a beautiful, keyboard-centric Git interface.
 
-![代码编辑器](docs/assets/feature-git.png)
+![Git Manager](docs/assets/feature-editor.png)
 
-- 多标签编辑，支持拖拽排序
-- 文件树支持创建/重命名/删除操作
-- 自动语言检测
-- 编辑器状态跨会话持久化
-
----
-
-### AI 代码审查
-
-自动生成高质量的 Commit Message，并利用 AI 助手对代码变更进行深度审查与优化。
-
-![AI 代码审查](docs/assets/feature-agents.png)
+- Change list showing all modified files
+- Stage/unstage operations
+- Commit history browser
+- Code diff view
 
 ---
 
-### 三栏合并工具
+### Integrated File Editor
 
-内置专业的三栏合并编辑器。清晰展示冲突来源，支持一键采纳变更与实时结果预览，让解决冲突变得轻松愉悦。
+Built-in Monaco editor for quick edits. Syntax highlighting for 50+ languages with drag-and-drop multi-tab support.
 
-![三栏合并工具](docs/assets/feature-merge.png)
+![File Editor](docs/assets/feature-git.png)
 
----
-
-### Worktree 管理
-
-毫秒级创建与切换 Git Worktree。在不同功能分支间自由穿梭，无需重复配置环境。
-
-- 从现有分支或新分支创建 worktree
-- 即时切换 worktree
-- 删除 worktree 并可选择同时删除分支
-- 可视化 worktree 列表，显示分支状态
+- Multi-tab editing with drag-and-drop reorder
+- File tree with create/rename/delete operations
+- Automatic language detection
+- Editor state persistence across sessions
 
 ---
 
-### IDE 桥接
+### AI Code Review
 
-在 EnsoAI 中统筹全局，一键跳转至 VS Code 或 Cursor 进行深度开发。无缝衔接现有工具链。
+Auto-generate high-quality commit messages and perform deep code reviews using your favorite AI agents.
 
-通过 `Cmd+Shift+P` 打开命令面板：
-- **面板控制** - 切换 Workspace/Worktree 侧边栏显示
-- **设置** - 打开设置对话框 (Cmd+,)
-- **打开方式** - 在 Cursor、Ghostty、VS Code 等中打开当前项目
+![AI Code Review](docs/assets/feature-agents.png)
 
 ---
 
-### 其他特性
+### 3-Way Merge Tool
 
-- **多窗口支持** - 同时打开多个工作空间
-- **主题同步** - 应用主题可与终端主题（400+ Ghostty 主题）同步
-- **键盘快捷键** - 高效导航（Cmd+1-9 切换标签）
-- **设置持久化** - 所有设置保存为 JSON，便于恢复
+Built-in professional 3-way merge editor. Clearly visualize conflict sources and resolve them with a single click and real-time result preview.
+
+![3-Way Merge Tool](docs/assets/feature-merge.png)
 
 ---
 
-## 技术栈
+### Git Worktree Management
 
-- **框架**: Electron + React 19 + TypeScript
-- **样式**: Tailwind CSS 4
-- **编辑器**: Monaco Editor
-- **终端**: xterm.js + node-pty
+Create, switch, and manage Git worktrees instantly. No more context switching costs between branches.
+
+- Create worktrees from existing or new branches
+- Switch between worktrees instantly
+- Delete worktrees with optional branch cleanup
+- Visual worktree list with branch status
+
+---
+
+### IDE Bridge
+
+Use EnsoAI for orchestration, then jump into VS Code or Cursor for deep diving with a single click.
+
+Quick access to all actions via `Cmd+Shift+P`:
+- **Panel Control** - Toggle Workspace/Worktree sidebar visibility
+- **Settings** - Open settings dialog (Cmd+,)
+- **Open In** - Open current project in Cursor, Ghostty, VS Code, etc.
+
+---
+
+### Additional Features
+
+- **Multi-Window Support** - Open multiple workspaces simultaneously
+- **Theme Sync** - Sync app theme with terminal theme (400+ Ghostty themes)
+- **Keyboard Shortcuts** - Efficient navigation (Cmd+1-9 to switch tabs)
+- **Settings Persistence** - All settings saved to JSON for easy recovery
+
+---
+
+## Tech Stack
+
+- **Framework**: Electron + React 19 + TypeScript
+- **Styling**: Tailwind CSS 4
+- **Editor**: Monaco Editor
+- **Terminal**: xterm.js + node-pty
 - **Git**: simple-git
-- **数据库**: better-sqlite3
+- **Database**: better-sqlite3
 
 ---
 
 ## FAQ
 
-### 基础使用
+### Basic Usage
 
 <details>
-<summary><strong>EnsoAI 与普通 IDE 有什么区别？</strong></summary>
+<summary><strong>How is EnsoAI different from a regular IDE?</strong></summary>
 
-EnsoAI 专注于 **Git Worktree + AI Agent** 的协作场景。它不是要替代 VS Code 或 Cursor，而是作为一个轻量级的工作空间管理器，让你能够：
-- 在多个 worktree 之间快速切换，每个 worktree 独立运行 AI Agent
-- 同时进行多个功能分支的开发，互不干扰
-- 通过 "Open In" 功能随时跳转到你熟悉的 IDE 继续深度开发
+EnsoAI focuses on **Git Worktree + AI Agent** collaboration. It's not meant to replace VS Code or Cursor, but rather serves as a lightweight workspace manager that allows you to:
+- Quickly switch between multiple worktrees, each running an independent AI Agent
+- Develop multiple feature branches simultaneously without interference
+- Jump to your preferred IDE anytime via "Open In" for deeper development
 
 </details>
 
 <details>
-<summary><strong>支持哪些 AI Agent？</strong></summary>
+<summary><strong>Which AI Agents are supported?</strong></summary>
 
-内置支持 Claude、Codex、Gemini、Cursor Agent、Droid、Auggie。你也可以在设置中添加任意支持 CLI 的 Agent，只需指定启动命令即可。
-
-</details>
-
-<details>
-<summary><strong>Agent 会话是否会保留？</strong></summary>
-
-是的。每个 worktree 的 Agent 会话独立保存，切换 worktree 后再切回来，之前的对话上下文仍然存在。
-
-</details>
-
----
-
-### 使用场景
-
-<details>
-<summary><strong>什么时候应该使用 EnsoAI？</strong></summary>
-
-| 场景 | 说明 |
-|------|------|
-| **多任务并行开发** | 同时处理 feature-A 和 bugfix-B，每个分支有独立的 AI 会话和终端 |
-| **AI 辅助 Code Review** | 在新 worktree 中让 AI 审查代码，主分支开发不受影响 |
-| **实验性开发** | 创建临时 worktree 让 AI 自由实验，不满意直接删除 |
-| **对比调试** | 同时打开多个 worktree 对比不同实现 |
+Built-in support for Claude, Codex, Gemini, Cursor Agent, Droid, and Auggie. You can also add any CLI-based agent in settings by specifying the launch command.
 
 </details>
 
 <details>
-<summary><strong>为什么使用官方 CLI 而不使用 ACP？</strong></summary>
+<summary><strong>Are Agent sessions preserved?</strong></summary>
 
-虽然 ACP 能够统一不同 Agent 的核心能力，但是也仅限于核心能力缺失了很多功能。切换不同 Agent 的场景其实并不多而且不同 Agent 的 CLI 核心功能都相似。所以我们认为对于有经验的开发者各 CLI 更具有生产力。
-
-</details>
-
-<details>
-<summary><strong>EnsoAI 适合什么规模的项目？</strong></summary>
-
-中小型项目最为合适。对于大型 monorepo，建议配合 VS Code 等全功能 IDE 使用 —— EnsoAI 负责 worktree 管理和 AI 交互，IDE 负责深度开发。
+Yes. Each worktree's Agent session is saved independently. When you switch back to a worktree, the previous conversation context is still there.
 
 </details>
 
 ---
 
-### 开发流程
+### Use Cases
 
 <details>
-<summary><strong>使用 EnsoAI 的典型开发流程是什么？</strong></summary>
+<summary><strong>When should I use EnsoAI?</strong></summary>
+
+| Scenario | Description |
+|----------|-------------|
+| **Parallel Development** | Work on feature-A and bugfix-B simultaneously, each branch has independent AI sessions and terminals |
+| **AI-Assisted Code Review** | Let AI review code in a new worktree without affecting main branch development |
+| **Experimental Development** | Create a temporary worktree for AI to experiment freely, delete if unsatisfied |
+| **Comparison Debugging** | Open multiple worktrees side by side to compare different implementations |
+
+</details>
+
+<details>
+<summary><strong>Why use official CLIs instead of ACP?</strong></summary>
+
+While ACP can unify core capabilities across different Agents, it's limited to just those core features and lacks many functionalities. Switching between different Agents isn't a common scenario, and the core features of different Agent CLIs are quite similar. We believe that for experienced developers, the native CLIs are more productive.
+
+</details>
+
+<details>
+<summary><strong>What project size is EnsoAI suitable for?</strong></summary>
+
+Best suited for small to medium projects. For large monorepos, we recommend using it alongside VS Code or similar full-featured IDEs — EnsoAI handles worktree management and AI interaction, while the IDE handles deep development.
+
+</details>
+
+---
+
+### Development Workflow
+
+<details>
+<summary><strong>What's a typical development workflow with EnsoAI?</strong></summary>
 
 ```
-1. 打开 Workspace
-   └── 选择或添加 Git 仓库
+1. Open Workspace
+   └── Select or add a Git repository
 
-2. 创建/切换 Worktree
-   └── 为新功能创建 worktree（自动关联新分支）
+2. Create/Switch Worktree
+   └── Create a worktree for new feature (auto-creates branch)
 
-3. 启动 AI Agent
-   └── 在 Agent 面板与 Claude/Codex 等对话
-   └── AI 直接在当前 worktree 目录下工作
+3. Start AI Agent
+   └── Chat with Claude/Codex in the Agent panel
+   └── AI works directly in the current worktree directory
 
-4. 编辑 & 测试
-   └── 使用内置编辑器快速修改
-   └── 使用终端运行测试/构建
+4. Edit & Test
+   └── Quick edits with built-in editor
+   └── Run tests/builds in terminal
 
-5. 提交 & 合并
-   └── 完成后在终端 git commit/push
-   └── 或通过 "Open In" 跳转到 IDE 进行最终审查
+5. Commit & Merge
+   └── Git commit/push in terminal
+   └── Or use "Open In" to jump to IDE for final review
 ```
 
 </details>
 
 <details>
-<summary><strong>如何高效管理多个并行任务？</strong></summary>
+<summary><strong>How to efficiently manage multiple parallel tasks?</strong></summary>
 
-1. 为每个任务创建独立 worktree（`Cmd+N` 或点击 + 按钮）
-2. 使用快捷键 `Cmd+1-9` 快速切换 worktree
-3. 每个 worktree 有独立的 Agent 会话、终端标签、编辑器状态
-4. 完成后删除 worktree，可选择同时删除分支
+1. Create a separate worktree for each task (`Cmd+N` or click + button)
+2. Use `Cmd+1-9` to quickly switch between worktrees
+3. Each worktree has independent Agent sessions, terminal tabs, and editor state
+4. Delete worktree when done, optionally delete the branch too
 
 </details>
 
 <details>
-<summary><strong>AI Agent 生成的代码如何 review？</strong></summary>
+<summary><strong>How to review AI-generated code?</strong></summary>
 
-推荐流程：
-1. 让 AI 在独立 worktree 中生成代码
-2. 使用内置编辑器或 "Open In Cursor/VS Code" 审查
-3. 满意后在终端提交；不满意可继续对话修改或直接删除 worktree
-
-</details>
-
----
-
-### 快捷键
-
-<details>
-<summary><strong>常用快捷键有哪些？</strong></summary>
-
-| 快捷键 | 功能 |
-|--------|------|
-| `Cmd+Shift+P` | 打开命令面板 |
-| `Cmd+,` | 打开设置 |
-| `Cmd+1-9` | 切换到对应标签 |
-| `Cmd+T` | 新建终端/Agent 会话 |
-| `Cmd+W` | 关闭当前终端/会话 |
-| `Cmd+S` | 保存文件 |
-| `Shift+Enter` | 终端中输入换行 |
+Recommended workflow:
+1. Let AI generate code in a separate worktree
+2. Review using built-in editor or "Open In Cursor/VS Code"
+3. Commit in terminal if satisfied; continue the conversation or delete the worktree if not
 
 </details>
 
 ---
 
-### 故障排除
+### Keyboard Shortcuts
 
 <details>
-<summary><strong>Agent 无法启动？</strong></summary>
+<summary><strong>What are the common keyboard shortcuts?</strong></summary>
 
-1. 确认对应 CLI 工具已安装（如 `claude`、`codex`）
-2. 在终端中手动运行命令验证
-3. 检查设置中的 Agent 路径配置
+| Shortcut | Function |
+|----------|----------|
+| `Cmd+Shift+P` | Open command palette |
+| `Cmd+,` | Open settings |
+| `Cmd+1-9` | Switch to corresponding tab |
+| `Cmd+T` | New terminal/Agent session |
+| `Cmd+W` | Close current terminal/session |
+| `Cmd+S` | Save file |
+| `Shift+Enter` | Insert newline in terminal |
+
+</details>
+
+---
+
+### Troubleshooting
+
+<details>
+<summary><strong>Agent won't start?</strong></summary>
+
+1. Verify the CLI tool is installed (e.g., `claude`, `codex`)
+2. Manually run the command in terminal to verify
+3. Check Agent path configuration in settings
 
 </details>
 
 <details>
-<summary><strong>终端显示异常/花屏？</strong></summary>
+<summary><strong>Terminal display issues/artifacts?</strong></summary>
 
-进入设置 → 终端 → 将渲染器从 WebGL 切换为 DOM。
+Go to Settings → Terminal → Switch renderer from WebGL to DOM.
 
 </details>
 
@@ -350,4 +355,4 @@ EnsoAI 专注于 **Git Worktree + AI Agent** 的协作场景。它不是要替�
 
 ## License
 
-MIT License - 详见 [LICENSE](LICENSE)。
+MIT License - see [LICENSE](LICENSE) for details.
