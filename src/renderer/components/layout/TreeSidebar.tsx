@@ -945,9 +945,9 @@ function WorktreeTreeItem({
                   : 'text-muted-foreground'
             )}
           />
-          <div className="min-w-0 flex-1">
-            <span className={cn('truncate', isPrunable && 'line-through')}>{branchDisplay}</span>
-          </div>
+          <span className={cn('min-w-0 flex-1 truncate', isPrunable && 'line-through')}>
+            {branchDisplay}
+          </span>
           {isPrunable ? (
             <span className="shrink-0 rounded bg-destructive/20 px-1 py-0.5 text-[9px] font-medium uppercase text-destructive">
               {t('Deleted')}
