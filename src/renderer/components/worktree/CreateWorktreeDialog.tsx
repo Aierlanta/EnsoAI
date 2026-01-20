@@ -159,21 +159,29 @@ export function CreateWorktreeDialog({
     [branches, t]
   );
 
+  // Track if baseBranch has been initialized to prevent Combobox reset
+  const baseBranchInitializedRef = React.useRef(false);
+
   // Initialize baseBranch state when dialog opens
   React.useEffect(() => {
-    if (open && currentBranch && !baseBranch) {
+    if (open && currentBranch && !baseBranchInitializedRef.current) {
       const branchName = currentBranch.name;
       setBaseBranch(branchName);
       setBaseBranchQuery(getBranchLabel(branchName));
+      baseBranchInitializedRef.current = true;
     }
-  }, [open, currentBranch, baseBranch, getBranchLabel]);
+    // Reset initialized flag when dialog closes
+    if (!open) {
+      baseBranchInitializedRef.current = false;
+    }
+  }, [open, currentBranch, getBranchLabel]);
 
   // Keep input value in sync when dropdown is closed
   React.useEffect(() => {
-    if (!baseBranchOpen) {
-      setBaseBranchQuery(getBranchLabel(baseBranch || currentBranch?.name));
+    if (!baseBranchOpen && baseBranch) {
+      setBaseBranchQuery(getBranchLabel(baseBranch));
     }
-  }, [baseBranch, currentBranch, baseBranchOpen, getBranchLabel]);
+  }, [baseBranch, baseBranchOpen, getBranchLabel]);
 
   const loadPullRequests = React.useCallback(async () => {
     setPrsLoading(true);
@@ -440,12 +448,22 @@ export function CreateWorktreeDialog({
                     items={branchGroups}
                     value={baseBranch || null}
                     onValueChange={(value: string | null) => {
+                      // Ignore null values from Combobox initialization/reset if already initialized
+                      if (value === null && baseBranchInitializedRef.current) {
+                        return;
+                      }
                       const nextValue = value || '';
                       setBaseBranch(nextValue);
                       setBaseBranchQuery(getBranchLabel(nextValue));
                     }}
                     inputValue={baseBranchQuery}
-                    onInputValueChange={setBaseBranchQuery}
+                    onInputValueChange={(value) => {
+                      // Ignore empty string during initialization if we already have a query
+                      if (value === '' && baseBranchQuery && baseBranchInitializedRef.current) {
+                        return;
+                      }
+                      setBaseBranchQuery(value);
+                    }}
                     open={baseBranchOpen}
                     onOpenChange={setBaseBranchOpen}
                   >
