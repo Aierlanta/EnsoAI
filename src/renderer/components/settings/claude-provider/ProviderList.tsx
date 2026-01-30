@@ -18,6 +18,11 @@ import { toastManager } from '@/components/ui/toast';
 import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip';
 import { useShouldPoll } from '@/hooks/useWindowFocus';
 import { useI18n } from '@/i18n';
+import {
+  clearClaudeProviderSwitch,
+  isClaudeProviderMatch,
+  markClaudeProviderSwitch,
+} from '@/lib/claudeProvider';
 import { cn } from '@/lib/utils';
 import { useSettingsStore } from '@/stores/settings';
 import { ProviderDialog } from './ProviderDialog';
@@ -174,14 +179,10 @@ export function ProviderList({ className }: ProviderListProps) {
 
   // 计算当前激活的 Provider
   const activeProvider = React.useMemo(() => {
-    const env = claudeData?.settings?.env;
-    if (!env) return null;
-    return (
-      providers.find(
-        (p) => p.baseUrl === env.ANTHROPIC_BASE_URL && p.authToken === env.ANTHROPIC_AUTH_TOKEN
-      ) ?? null
-    );
-  }, [providers, claudeData?.settings]);
+    const currentConfig = claudeData?.extracted;
+    if (!currentConfig) return null;
+    return providers.find((p) => isClaudeProviderMatch(p, currentConfig)) ?? null;
+  }, [providers, claudeData?.extracted]);
 
   // 检查当前配置是否未保存
   const hasUnsavedConfig = React.useMemo(() => {
@@ -191,6 +192,7 @@ export function ProviderList({ className }: ProviderListProps) {
 
   // 切换 Provider
   const handleSwitch = async (provider: ClaudeProvider) => {
+    markClaudeProviderSwitch(provider);
     const success = await window.electronAPI.claudeProvider.apply(provider);
     if (success) {
       queryClient.invalidateQueries({ queryKey: ['claude-settings'] });
@@ -199,6 +201,8 @@ export function ProviderList({ className }: ProviderListProps) {
         title: t('Provider switched'),
         description: provider.name,
       });
+    } else {
+      clearClaudeProviderSwitch();
     }
   };
 

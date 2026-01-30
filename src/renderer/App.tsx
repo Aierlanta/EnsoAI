@@ -7,6 +7,7 @@ import type {
 } from '@shared/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { consumeClaudeProviderSwitch, isClaudeProviderMatch } from '@/lib/claudeProvider';
 import { normalizeHexColor } from '@/lib/colors';
 import {
   ALL_GROUP_ID,
@@ -272,6 +273,28 @@ export default function App() {
     }
   }, [settingsDisplayMode]);
 
+  // Listen for 'open-settings-provider' event from SessionBar
+  useEffect(() => {
+    const handleOpenSettingsProvider = () => {
+      setSettingsCategory('integration');
+      setScrollToProvider(true);
+      // 根据用户上次的设置显示模式打开设置
+      if (settingsDisplayMode === 'tab') {
+        if (activeTab !== 'settings') {
+          setPreviousTab(activeTab);
+          setActiveTab('settings');
+        }
+      } else {
+        setSettingsDialogOpen(true);
+      }
+    };
+
+    window.addEventListener('open-settings-provider', handleOpenSettingsProvider);
+    return () => {
+      window.removeEventListener('open-settings-provider', handleOpenSettingsProvider);
+    };
+  }, [settingsDisplayMode, activeTab]);
+
   // Keyboard shortcuts
   useAppKeyboardShortcuts({
     activeWorktreePath: activeWorktree?.path,
@@ -409,15 +432,17 @@ export default function App() {
       const { extracted } = data;
       if (!extracted?.baseUrl) return;
 
+      if (consumeClaudeProviderSwitch(extracted)) {
+        return;
+      }
+
       // Close previous provider toast if exists
       if (providerToastRef.current) {
         toastManager.close(providerToastRef.current);
       }
 
       // Check if the new config matches any saved provider
-      const matched = claudeProviders.find(
-        (p) => p.baseUrl === extracted.baseUrl && p.authToken === extracted.authToken
-      );
+      const matched = claudeProviders.find((p) => isClaudeProviderMatch(p, extracted));
 
       if (matched) {
         // Switched to a known provider
