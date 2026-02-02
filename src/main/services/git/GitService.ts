@@ -135,15 +135,41 @@ export class GitService {
     // Extract base branch name without remote prefix
     const baseBranchName = baseBranch.replace(/^remotes\//, '').replace(/^origin\//, '');
 
+    // Get merged PR information from GitHub CLI (if available)
+    const mergedPRBranches = new Set<string>();
+    try {
+      const { stdout } = await execAsync(
+        'gh pr list --state merged --json headRefName --limit 200',
+        {
+          cwd: this.workdir,
+          env: { ...process.env, ...getProxyEnvVars(), PATH: getEnhancedPath() },
+          timeout: 5000, // 5 second timeout
+        }
+      );
+      const prs = JSON.parse(stdout) as Array<{ headRefName: string }>;
+      for (const pr of prs) {
+        mergedPRBranches.add(pr.headRefName);
+      }
+    } catch {
+      // gh CLI not available or not authenticated, skip PR detection
+    }
+
     // Mark branches as merged
-    return branches.map((branch) => ({
-      ...branch,
-      merged:
-        mergedSet.has(branch.name) &&
-        branch.name !== baseBranchName &&
-        branch.name !== `remotes/origin/${baseBranchName}` &&
-        branch.name !== baseBranch,
-    }));
+    return branches.map((branch) => {
+      const isBaseBranch =
+        branch.name === baseBranchName ||
+        branch.name === `remotes/origin/${baseBranchName}` ||
+        branch.name === baseBranch;
+
+      // Check if this branch has a merged PR
+      const branchNameWithoutRemote = branch.name.replace('remotes/origin/', '');
+      const hasMergedPR = mergedPRBranches.has(branchNameWithoutRemote);
+
+      return {
+        ...branch,
+        merged: !isBaseBranch && (mergedSet.has(branch.name) || hasMergedPR),
+      };
+    });
   }
 
   async getLog(maxCount = 50, skip = 0): Promise<GitLogEntry[]> {
