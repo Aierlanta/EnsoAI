@@ -20,7 +20,7 @@
       PRIMARY: '#4F46E5', // Enso Indigo
       DANGER: '#EF4444',
       SUCCESS: '#10B981',
-      BG: 'rgba(255, 255, 255, 0.8)',
+      BG: '#ffffff',
       TEXT: '#1F2937',
       OVERLAY: 'rgba(79, 70, 229, 0.15)',
       BORDER: 'rgba(79, 70, 229, 0.5)',
