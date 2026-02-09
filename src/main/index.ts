@@ -253,8 +253,6 @@ app.whenReady().then(async () => {
         request.url.startsWith('local-image://remote-fetch') ||
         urlObj.hostname === 'remote-fetch';
 
-      console.log(`[local-image] hostname=${urlObj.hostname}, isRemoteFetch=${isRemoteFetch}, url=${request.url.substring(0, 120)}`);
-
       if (isRemoteFetch) {
         // Extract remote URL: try searchParams first, then manual regex as fallback
         let fetchUrl = urlObj.searchParams.get('url');

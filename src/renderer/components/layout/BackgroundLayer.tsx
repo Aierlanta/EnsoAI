@@ -220,32 +220,6 @@ export function BackgroundLayer() {
     return resolved;
   }, [displayPath, refreshCount]);
 
-  useEffect(() => {
-    if (backgroundSourceType === "url" || isRemoteUrl) {
-      console.log("[BackgroundLayer] URL/remote source state:", {
-        backgroundSourceType,
-        backgroundUrlPath,
-        activePath,
-        displayPath,
-        mediaUrl,
-        isRemoteUrl,
-        isUrlMode,
-        refreshCount,
-        backgroundImageEnabled,
-      });
-    }
-  }, [
-    backgroundSourceType,
-    backgroundUrlPath,
-    activePath,
-    displayPath,
-    mediaUrl,
-    isRemoteUrl,
-    isUrlMode,
-    refreshCount,
-    backgroundImageEnabled,
-  ]);
-
   const isVideo = useMemo(() => {
     if (!displayPath) return false;
     if (displayPath.startsWith("http")) {
@@ -334,12 +308,9 @@ export function BackgroundLayer() {
           src={mediaUrl}
           alt=""
           referrerPolicy="no-referrer"
-          onLoad={() =>
-            console.log("[BackgroundLayer] Remote image loaded OK:", mediaUrl)
-          }
           onError={() =>
-            console.error(
-              "[BackgroundLayer] Remote image FAILED to load:",
+            console.warn(
+              "[BackgroundLayer] Remote image failed to load:",
               mediaUrl,
             )
           }
