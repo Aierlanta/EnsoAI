@@ -1754,6 +1754,12 @@ export default function App() {
   // Manage background image: toggle body class, force body transparent,
   // and directly override theme CSS variables on body via inline style
   // (CSS class-based overrides in @layer base may be overridden by Tailwind's cascade)
+  //
+  // Opacity semantics (user-facing slider):
+  //   0%   = pure theme background (white/black), no image visible
+  //   100% = full image visible, panels fully transparent
+  // Internally: backgroundOpacity = image visibility (0..1)
+  //             panelOpacity = 1 - backgroundOpacity (overlay opacity)
   useEffect(() => {
     const body = document.body;
     const html = document.documentElement;
@@ -1765,13 +1771,14 @@ export default function App() {
 
       // Determine current theme mode
       const isDark = html.classList.contains("dark");
-      const opacity = backgroundOpacity;
+      // Panel overlay opacity is INVERTED: higher image opacity = more transparent panels
+      const panelOpacity = 1 - backgroundOpacity;
 
       // Directly set BOTH base CSS variables AND Tailwind color tokens on body
       // (Tailwind's bg-background uses var(--color-background), which may not cascade via var(--background))
       if (isDark) {
-        const bg = `oklch(0.145 0.014 285.82 / ${opacity})`;
-        const muted = `oklch(0.269 0.014 285.82 / ${opacity})`;
+        const bg = `oklch(0.145 0.014 285.82 / ${panelOpacity})`;
+        const muted = `oklch(0.269 0.014 285.82 / ${panelOpacity})`;
         // Base variables
         body.style.setProperty("--background", bg);
         body.style.setProperty("--card", bg);
@@ -1789,8 +1796,8 @@ export default function App() {
         body.style.setProperty("--color-border", muted);
         body.style.setProperty("--color-input", muted);
       } else {
-        const bg = `oklch(1 0 0 / ${opacity})`;
-        const muted = `oklch(0.965 0.003 285.82 / ${opacity})`;
+        const bg = `oklch(1 0 0 / ${panelOpacity})`;
+        const muted = `oklch(0.965 0.003 285.82 / ${panelOpacity})`;
         body.style.setProperty("--background", bg);
         body.style.setProperty("--card", bg);
         body.style.setProperty("--popover", bg);
